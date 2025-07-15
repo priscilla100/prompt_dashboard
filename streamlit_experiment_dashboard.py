@@ -91,14 +91,7 @@ def load_all_data():
     #     }
     }
     
-    # Load data for each experiment
-    # for exp_name, paths in experiments_paths.items():
-    #     try:
-    #         comparator.load_data(exp_name, paths['defined'], paths['undefined'])
-    #         st.success(f"✅ Loaded {exp_name}")
-    #     except FileNotFoundError as e:
-    #         st.error(f"❌ Error loading {exp_name}: {e}")
-    
+
     # return comparator
     for exp_name, paths in experiments_paths.items():
         comparator.load_data(exp_name, paths['defined'], paths['undefined'])
@@ -354,7 +347,7 @@ def create_distribution_comparison(data, experiment_name, selected_metric, metri
     fig.add_trace(go.Histogram(
         x=defined_df[actual_col],
         name='Defined Prompt',
-        opacity=0.7,
+        opacity=0.5,
         marker_color='#3498db',
         nbinsx=20
     ))
@@ -362,7 +355,7 @@ def create_distribution_comparison(data, experiment_name, selected_metric, metri
     fig.add_trace(go.Histogram(
         x=undefined_df[actual_col],
         name='Not-Well-Defined Prompt',
-        opacity=0.7,
+        opacity=0.5,
         marker_color='#e74c3c',
         nbinsx=20
     ))
@@ -518,7 +511,7 @@ def create_model_approach_comparison(data, experiment_name, selected_metric, met
         marker_color='#3498db',
         text=[f'{val:.2f}' for val in defined_values],
         textposition='auto',
-        opacity=0.8
+        # opacity=0.1
     ))
     
     # Add bars for undefined prompts
@@ -529,7 +522,7 @@ def create_model_approach_comparison(data, experiment_name, selected_metric, met
         marker_color='#e74c3c',
         text=[f'{val:.2f}' for val in undefined_values],
         textposition='auto',
-        opacity=0.8
+        # opacity=0.8
     ))
     
     # Update layout
@@ -842,21 +835,17 @@ def create_detailed_side_by_side_comparison(data, experiment_name, selected_metr
 def main():
     # Header
     st.markdown('<div class="main-header"><h1>🔬 Experiment Results Dashboard</h1><p>Compare Defined vs Undefined Prompts Across Different Experiments</p></div>', unsafe_allow_html=True)
-    
-    # st.title("🔬 Experiment Comparison Dashboard")
-    # st.markdown("Compare performance between **Defined** and **Not-Well-Defined** prompts across different experiments and metrics")
-    
-    # Load data
+
     with st.spinner("Loading experiment data..."):
         comparator = load_all_data()
     
     metric_mappings = get_metric_mappings()
-    
-    # Sidebar for controls
+
+    # # Sidebar for controls
     st.sidebar.header("📊 Controls")
     comparison_type = st.sidebar.radio(
         "Comparison Type",
-        ["Prompt Type",  "Model-Approach Analysis"],
+        ["Model-Approach Analysis", "Prompt Type"],
         help="Choose between comparing prompt types, or detailed model-approach analysis"
     )
     
