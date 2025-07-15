@@ -65,30 +65,34 @@ def load_all_data():
     
     # Define file paths
     experiments_paths = {
-        'nl2futureltl': {
+        'NL2FutureLTL': {
             'defined': os.path.join(script_dir, 'data', 'defined', 'comprehensive_table_future_little_tricky.csv'),
             'undefined': os.path.join(script_dir, 'data', 'undefined', 'comprehensive_table_future_little_tricky.csv')
         },
-        'nl2pl': {
+        'NL2PL': {
             'defined': os.path.join(script_dir, 'data', 'defined', 'nl2pl_aggregated_results.csv'),
             'undefined': os.path.join(script_dir, 'data', 'undefined', 'nl2pl_aggregated_results.csv')
         },
-        'wff': {
+        'WFF': {
             'defined': os.path.join(script_dir, 'data', 'defined', 'wff_aggregate_metrics.csv'),
             'undefined': os.path.join(script_dir, 'data', 'undefined', 'wff_aggregate_metrics.csv')
         },
-        'textbook_nl2futureltl': {
+        'Textbook NL2FutureLTL': {
             'defined': os.path.join(script_dir, 'data', 'defined', 'comprehensive_table_future_textbook.csv'),
             'undefined': os.path.join(script_dir, 'data', 'undefined', 'comprehensive_table_future_textbook.csv')
         },
-        'trace_characterization': {
+        'NL2PastLTL': {
+            'defined': os.path.join(script_dir, 'data', 'defined', 'comprehensive_table_past_little_tricky.csv'),
+            'undefined': os.path.join(script_dir, 'data', 'undefined', 'comprehensive_table_past_little_tricky.csv')
+        },
+        'Trace Characterization': {
             'defined': os.path.join(script_dir, 'data', 'defined', 'trace_characterization.csv'),
             'undefined': os.path.join(script_dir, 'data', 'undefined', 'trace_characterization.csv')
         },
-    #     'trace_generation': {
-    #         'defined': os.path.join(script_dir, 'data', 'defined', 'trace_generation.csv'),
-    #         'undefined': os.path.join(script_dir, 'data', 'undefined', 'trace_generation.csv')
-    #     }
+        # 'Trace Generation': {
+        #     'defined': os.path.join(script_dir, 'data', 'defined', 'trace_generation.csv'),
+        #     'undefined': os.path.join(script_dir, 'data', 'undefined', 'trace_generation.csv')
+        # }
     }
     
 
@@ -101,7 +105,7 @@ def load_all_data():
 def get_metric_mappings():
     """Define metric mappings for each experiment"""
     return {
-        'nl2pl': {
+        'NL2PL': {
             'Accuracy': 'Accuracy',
             'Precision': 'Precision', 
             'Recall': 'Recall',
@@ -109,7 +113,7 @@ def get_metric_mappings():
             'Jaccard Index': 'Jaccard',
             'Levenshtein Distance': 'Levenshtein'
         },
-        'nl2futureltl': {
+        'NL2FutureLTL': {
             'GT→Pred Accuracy': 'Accuracy_GT_to_Pred (%)',
             'Pred→GT Accuracy': 'Accuracy_Pred_to_GT (%)',
             'Equivalence Accuracy': 'Equivalence_Accuracy (%)',
@@ -119,13 +123,17 @@ def get_metric_mappings():
             'Recall': 'Recall (%)',
             'F1 Score': 'F1 (%)'
         },
-        'wff': {
+        'WFF': {
             'Accuracy': 'Accuracy',
             'Precision': 'Precision',
             'Recall': 'Recall',
-            'F1 Score': 'F1_Score'
+            'F1 Score': 'F1_Score',
+            'True Positives': 'True_Positives',
+            'True Negatives': 'True_Negatives',
+            'False Positives': 'False_Positives',
+            'False Negatives': 'False_Negatives',
         },
-        'trace_generation': {
+        'Trace Generation': {
             'Accuracy': 'Accuracy',
             'Precision': 'Precision',
             'Recall': 'Recall',
@@ -133,12 +141,22 @@ def get_metric_mappings():
             'Positive Satisfaction Rate': 'Positive_Satisfaction_Rate',
             'Negative Falsification Rate': 'Negative_Falsification_Rate'
         },
-        'trace_characterization': {
+        'Trace Characterization': {
             'Accuracy': 'Accuracy',
             'Precision': 'Precision',
             'F1 Score': 'F1'
         },
-        'textbook_nl2futureltl': {
+        'Textbook NL2FutureLTL': {
+            'GT→Pred Accuracy': 'Accuracy_GT_to_Pred (%)',
+            'Pred→GT Accuracy': 'Accuracy_Pred_to_GT (%)',
+            'Equivalence Accuracy': 'Equivalence_Accuracy (%)',
+            'Syntactic Correctness': 'Syntactic_Correctness_Rate (%)',
+            'Syntactic Match': 'Syntactic_Match_Rate (%)',
+            'Precision': 'Precision (%)',
+            'Recall': 'Recall (%)',
+            'F1 Score': 'F1 (%)'
+        },
+        'NL2PastLTL': {
             'GT→Pred Accuracy': 'Accuracy_GT_to_Pred (%)',
             'Pred→GT Accuracy': 'Accuracy_Pred_to_GT (%)',
             'Equivalence Accuracy': 'Equivalence_Accuracy (%)',
@@ -497,8 +515,7 @@ def create_model_approach_comparison(data, experiment_name, selected_metric, met
                 
                 x_labels.append(x_label)
                 defined_values.append(defined_mean)
-                undefined_values.append(undefined_mean)
-    
+                undefined_values.append(undefined_mean)    
     if not x_labels:
         st.warning("No matching model-approach combinations found in both defined and undefined data")
         return None
