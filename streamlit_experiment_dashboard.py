@@ -81,10 +81,10 @@ def load_all_data():
             'defined': os.path.join(script_dir, 'data', 'defined', 'comprehensive_table_future_textbook.csv'),
             'undefined': os.path.join(script_dir, 'data', 'undefined', 'comprehensive_table_future_textbook.csv')
         },
-    #     'trace_characterization': {
-    #         'defined': os.path.join(script_dir, 'data', 'defined', 'trace_characterization.csv'),
-    #         'undefined': os.path.join(script_dir, 'data', 'undefined', 'trace_characterization.csv')
-    #     },
+        'trace_characterization': {
+            'defined': os.path.join(script_dir, 'data', 'defined', 'trace_characterization.csv'),
+            'undefined': os.path.join(script_dir, 'data', 'undefined', 'trace_characterization.csv')
+        },
     #     'trace_generation': {
     #         'defined': os.path.join(script_dir, 'data', 'defined', 'trace_generation.csv'),
     #         'undefined': os.path.join(script_dir, 'data', 'undefined', 'trace_generation.csv')
