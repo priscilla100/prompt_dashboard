@@ -89,10 +89,10 @@ def load_all_data():
             'defined': os.path.join(script_dir, 'data', 'defined', 'trace_characterization.csv'),
             'undefined': os.path.join(script_dir, 'data', 'undefined', 'trace_characterization.csv')
         },
-        # 'Trace Generation': {
-        #     'defined': os.path.join(script_dir, 'data', 'defined', 'trace_generation.csv'),
-        #     'undefined': os.path.join(script_dir, 'data', 'undefined', 'trace_generation.csv')
-        # }
+        'Trace Generation': {
+            'defined': os.path.join(script_dir, 'data', 'defined', 'trace_generation.csv'),
+            'undefined': os.path.join(script_dir, 'data', 'undefined', 'trace_generation.csv')
+        }
     }
     
 
