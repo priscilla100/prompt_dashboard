@@ -1,0 +1,157 @@
+model1,model2,yes,no,total_valid,yes_pct
+Ground Truth,claude-3.5-sonnet_few_shot,219,73,292,75.0
+Ground Truth,claude-3.5-sonnet_zero_shot,211,79,290,72.76
+Ground Truth,claude-3.5-sonnet_zero_shot_self_refine,134,53,187,71.66
+Ground Truth,gemini-1.5-flash_few_shot,190,81,271,70.11
+Ground Truth,gemini-1.5-flash_zero_shot,189,82,271,69.74
+Ground Truth,gemini-1.5-flash_zero_shot_self_refine,190,80,270,70.37
+Ground Truth,gemini-1.5-pro_few_shot,198,53,251,78.88
+Ground Truth,gemini-1.5-pro_zero_shot,200,50,250,80.0
+Ground Truth,gemini-1.5-pro_zero_shot_self_refine,199,51,250,79.6
+Ground Truth,gemini-2.5-flash_few_shot,219,70,289,75.78
+Ground Truth,gemini-2.5-flash_zero_shot,219,71,290,75.52
+Ground Truth,gemini-2.5-flash_zero_shot_self_refine,221,71,292,75.68
+claude-3.5-sonnet_few_shot,Ground Truth,216,79,295,73.22
+claude-3.5-sonnet_few_shot,claude-3.5-sonnet_zero_shot,263,31,294,89.46
+claude-3.5-sonnet_few_shot,claude-3.5-sonnet_zero_shot_self_refine,172,17,189,91.01
+claude-3.5-sonnet_few_shot,gemini-1.5-flash_few_shot,219,57,276,79.35
+claude-3.5-sonnet_few_shot,gemini-1.5-flash_zero_shot,219,57,276,79.35
+claude-3.5-sonnet_few_shot,gemini-1.5-flash_zero_shot_self_refine,218,56,274,79.56
+claude-3.5-sonnet_few_shot,gemini-1.5-pro_few_shot,231,24,255,90.59
+claude-3.5-sonnet_few_shot,gemini-1.5-pro_zero_shot,232,21,253,91.7
+claude-3.5-sonnet_few_shot,gemini-1.5-pro_zero_shot_self_refine,229,24,253,90.51
+claude-3.5-sonnet_few_shot,gemini-2.5-flash_few_shot,244,45,289,84.43
+claude-3.5-sonnet_few_shot,gemini-2.5-flash_zero_shot,252,40,292,86.3
+claude-3.5-sonnet_few_shot,gemini-2.5-flash_zero_shot_self_refine,257,38,295,87.12
+claude-3.5-sonnet_zero_shot,Ground Truth,210,82,292,71.92
+claude-3.5-sonnet_zero_shot,claude-3.5-sonnet_few_shot,268,26,294,91.16
+claude-3.5-sonnet_zero_shot,claude-3.5-sonnet_zero_shot_self_refine,178,11,189,94.18
+claude-3.5-sonnet_zero_shot,gemini-1.5-flash_few_shot,219,55,274,79.93
+claude-3.5-sonnet_zero_shot,gemini-1.5-flash_zero_shot,221,55,276,80.07
+claude-3.5-sonnet_zero_shot,gemini-1.5-flash_zero_shot_self_refine,217,55,272,79.78
+claude-3.5-sonnet_zero_shot,gemini-1.5-pro_few_shot,226,28,254,88.98
+claude-3.5-sonnet_zero_shot,gemini-1.5-pro_zero_shot,228,25,253,90.12
+claude-3.5-sonnet_zero_shot,gemini-1.5-pro_zero_shot_self_refine,227,25,252,90.08
+claude-3.5-sonnet_zero_shot,gemini-2.5-flash_few_shot,243,45,288,84.38
+claude-3.5-sonnet_zero_shot,gemini-2.5-flash_zero_shot,247,42,289,85.47
+claude-3.5-sonnet_zero_shot,gemini-2.5-flash_zero_shot_self_refine,254,38,292,86.99
+claude-3.5-sonnet_zero_shot_self_refine,Ground Truth,127,62,189,67.2
+claude-3.5-sonnet_zero_shot_self_refine,claude-3.5-sonnet_few_shot,167,22,189,88.36
+claude-3.5-sonnet_zero_shot_self_refine,claude-3.5-sonnet_zero_shot,169,20,189,89.42
+claude-3.5-sonnet_zero_shot_self_refine,gemini-1.5-flash_few_shot,136,40,176,77.27
+claude-3.5-sonnet_zero_shot_self_refine,gemini-1.5-flash_zero_shot,135,40,175,77.14
+claude-3.5-sonnet_zero_shot_self_refine,gemini-1.5-flash_zero_shot_self_refine,137,37,174,78.74
+claude-3.5-sonnet_zero_shot_self_refine,gemini-1.5-pro_few_shot,138,20,158,87.34
+claude-3.5-sonnet_zero_shot_self_refine,gemini-1.5-pro_zero_shot,141,19,160,88.12
+claude-3.5-sonnet_zero_shot_self_refine,gemini-1.5-pro_zero_shot_self_refine,141,17,158,89.24
+claude-3.5-sonnet_zero_shot_self_refine,gemini-2.5-flash_few_shot,152,32,184,82.61
+claude-3.5-sonnet_zero_shot_self_refine,gemini-2.5-flash_zero_shot,155,30,185,83.78
+claude-3.5-sonnet_zero_shot_self_refine,gemini-2.5-flash_zero_shot_self_refine,161,28,189,85.19
+gemini-1.5-flash_few_shot,Ground Truth,156,120,276,56.52
+gemini-1.5-flash_few_shot,claude-3.5-sonnet_few_shot,185,94,279,66.31
+gemini-1.5-flash_few_shot,claude-3.5-sonnet_zero_shot,183,93,276,66.3
+gemini-1.5-flash_few_shot,claude-3.5-sonnet_zero_shot_self_refine,115,64,179,64.25
+gemini-1.5-flash_few_shot,gemini-1.5-flash_zero_shot,259,20,279,92.83
+gemini-1.5-flash_few_shot,gemini-1.5-flash_zero_shot_self_refine,257,18,275,93.45
+gemini-1.5-flash_few_shot,gemini-1.5-pro_few_shot,189,53,242,78.1
+gemini-1.5-flash_few_shot,gemini-1.5-pro_zero_shot,189,51,240,78.75
+gemini-1.5-flash_few_shot,gemini-1.5-pro_zero_shot_self_refine,185,54,239,77.41
+gemini-1.5-flash_few_shot,gemini-2.5-flash_few_shot,179,97,276,64.86
+gemini-1.5-flash_few_shot,gemini-2.5-flash_zero_shot,180,97,277,64.98
+gemini-1.5-flash_few_shot,gemini-2.5-flash_zero_shot_self_refine,186,94,280,66.43
+gemini-1.5-flash_zero_shot,Ground Truth,156,121,277,56.32
+gemini-1.5-flash_zero_shot,claude-3.5-sonnet_few_shot,182,98,280,65.0
+gemini-1.5-flash_zero_shot,claude-3.5-sonnet_zero_shot,184,95,279,65.95
+gemini-1.5-flash_zero_shot,claude-3.5-sonnet_zero_shot_self_refine,116,63,179,64.8
+gemini-1.5-flash_zero_shot,gemini-1.5-flash_few_shot,261,19,280,93.21
+gemini-1.5-flash_zero_shot,gemini-1.5-flash_zero_shot_self_refine,259,16,275,94.18
+gemini-1.5-flash_zero_shot,gemini-1.5-pro_few_shot,187,56,243,76.95
+gemini-1.5-flash_zero_shot,gemini-1.5-pro_zero_shot,189,53,242,78.1
+gemini-1.5-flash_zero_shot,gemini-1.5-pro_zero_shot_self_refine,185,55,240,77.08
+gemini-1.5-flash_zero_shot,gemini-2.5-flash_few_shot,179,96,275,65.09
+gemini-1.5-flash_zero_shot,gemini-2.5-flash_zero_shot,182,95,277,65.7
+gemini-1.5-flash_zero_shot,gemini-2.5-flash_zero_shot_self_refine,186,93,279,66.67
+gemini-1.5-flash_zero_shot_self_refine,Ground Truth,156,118,274,56.93
+gemini-1.5-flash_zero_shot_self_refine,claude-3.5-sonnet_few_shot,185,91,276,67.03
+gemini-1.5-flash_zero_shot_self_refine,claude-3.5-sonnet_zero_shot,184,89,273,67.4
+gemini-1.5-flash_zero_shot_self_refine,claude-3.5-sonnet_zero_shot_self_refine,118,58,176,67.05
+gemini-1.5-flash_zero_shot_self_refine,gemini-1.5-flash_few_shot,263,11,274,95.99
+gemini-1.5-flash_zero_shot_self_refine,gemini-1.5-flash_zero_shot,261,12,273,95.6
+gemini-1.5-flash_zero_shot_self_refine,gemini-1.5-pro_few_shot,190,51,241,78.84
+gemini-1.5-flash_zero_shot_self_refine,gemini-1.5-pro_zero_shot,192,48,240,80.0
+gemini-1.5-flash_zero_shot_self_refine,gemini-1.5-pro_zero_shot_self_refine,187,53,240,77.92
+gemini-1.5-flash_zero_shot_self_refine,gemini-2.5-flash_few_shot,182,89,271,67.16
+gemini-1.5-flash_zero_shot_self_refine,gemini-2.5-flash_zero_shot,183,89,272,67.28
+gemini-1.5-flash_zero_shot_self_refine,gemini-2.5-flash_zero_shot_self_refine,188,87,275,68.36
+gemini-1.5-pro_few_shot,Ground Truth,164,91,255,64.31
+gemini-1.5-pro_few_shot,claude-3.5-sonnet_few_shot,197,59,256,76.95
+gemini-1.5-pro_few_shot,claude-3.5-sonnet_zero_shot,195,59,254,76.77
+gemini-1.5-pro_few_shot,claude-3.5-sonnet_zero_shot_self_refine,124,36,160,77.5
+gemini-1.5-pro_few_shot,gemini-1.5-flash_few_shot,188,53,241,78.01
+gemini-1.5-pro_few_shot,gemini-1.5-flash_zero_shot,191,51,242,78.93
+gemini-1.5-pro_few_shot,gemini-1.5-flash_zero_shot_self_refine,187,53,240,77.92
+gemini-1.5-pro_few_shot,gemini-1.5-pro_zero_shot,244,5,249,97.99
+gemini-1.5-pro_few_shot,gemini-1.5-pro_zero_shot_self_refine,245,3,248,98.79
+gemini-1.5-pro_few_shot,gemini-2.5-flash_few_shot,191,64,255,74.9
+gemini-1.5-pro_few_shot,gemini-2.5-flash_zero_shot,201,54,255,78.82
+gemini-1.5-pro_few_shot,gemini-2.5-flash_zero_shot_self_refine,198,58,256,77.34
+gemini-1.5-pro_zero_shot,Ground Truth,164,89,253,64.82
+gemini-1.5-pro_zero_shot,claude-3.5-sonnet_few_shot,196,57,253,77.47
+gemini-1.5-pro_zero_shot,claude-3.5-sonnet_zero_shot,194,58,252,76.98
+gemini-1.5-pro_zero_shot,claude-3.5-sonnet_zero_shot_self_refine,125,36,161,77.64
+gemini-1.5-pro_zero_shot,gemini-1.5-flash_few_shot,189,49,238,79.41
+gemini-1.5-pro_zero_shot,gemini-1.5-flash_zero_shot,191,48,239,79.92
+gemini-1.5-pro_zero_shot,gemini-1.5-flash_zero_shot_self_refine,189,49,238,79.41
+gemini-1.5-pro_zero_shot,gemini-1.5-pro_few_shot,243,5,248,97.98
+gemini-1.5-pro_zero_shot,gemini-1.5-pro_zero_shot_self_refine,244,7,251,97.21
+gemini-1.5-pro_zero_shot,gemini-2.5-flash_few_shot,190,63,253,75.1
+gemini-1.5-pro_zero_shot,gemini-2.5-flash_zero_shot,200,54,254,78.74
+gemini-1.5-pro_zero_shot,gemini-2.5-flash_zero_shot_self_refine,198,56,254,77.95
+gemini-1.5-pro_zero_shot_self_refine,Ground Truth,167,87,254,65.75
+gemini-1.5-pro_zero_shot_self_refine,claude-3.5-sonnet_few_shot,201,53,254,79.13
+gemini-1.5-pro_zero_shot_self_refine,claude-3.5-sonnet_zero_shot,199,53,252,78.97
+gemini-1.5-pro_zero_shot_self_refine,claude-3.5-sonnet_zero_shot_self_refine,127,33,160,79.38
+gemini-1.5-pro_zero_shot_self_refine,gemini-1.5-flash_few_shot,191,47,238,80.25
+gemini-1.5-pro_zero_shot_self_refine,gemini-1.5-flash_zero_shot,192,46,238,80.67
+gemini-1.5-pro_zero_shot_self_refine,gemini-1.5-flash_zero_shot_self_refine,190,49,239,79.5
+gemini-1.5-pro_zero_shot_self_refine,gemini-1.5-pro_few_shot,247,1,248,99.6
+gemini-1.5-pro_zero_shot_self_refine,gemini-1.5-pro_zero_shot,247,4,251,98.41
+gemini-1.5-pro_zero_shot_self_refine,gemini-2.5-flash_few_shot,194,59,253,76.68
+gemini-1.5-pro_zero_shot_self_refine,gemini-2.5-flash_zero_shot,203,50,253,80.24
+gemini-1.5-pro_zero_shot_self_refine,gemini-2.5-flash_zero_shot_self_refine,201,54,255,78.82
+gemini-2.5-flash_few_shot,Ground Truth,201,92,293,68.6
+gemini-2.5-flash_few_shot,claude-3.5-sonnet_few_shot,242,48,290,83.45
+gemini-2.5-flash_few_shot,claude-3.5-sonnet_zero_shot,240,50,290,82.76
+gemini-2.5-flash_few_shot,claude-3.5-sonnet_zero_shot_self_refine,152,34,186,81.72
+gemini-2.5-flash_few_shot,gemini-1.5-flash_few_shot,207,68,275,75.27
+gemini-2.5-flash_few_shot,gemini-1.5-flash_zero_shot,207,66,273,75.82
+gemini-2.5-flash_few_shot,gemini-1.5-flash_zero_shot_self_refine,206,65,271,76.01
+gemini-2.5-flash_few_shot,gemini-1.5-pro_few_shot,212,43,255,83.14
+gemini-2.5-flash_few_shot,gemini-1.5-pro_zero_shot,217,37,254,85.43
+gemini-2.5-flash_few_shot,gemini-1.5-pro_zero_shot_self_refine,213,40,253,84.19
+gemini-2.5-flash_few_shot,gemini-2.5-flash_zero_shot,266,27,293,90.78
+gemini-2.5-flash_few_shot,gemini-2.5-flash_zero_shot_self_refine,267,26,293,91.13
+gemini-2.5-flash_zero_shot,Ground Truth,209,85,294,71.09
+gemini-2.5-flash_zero_shot,claude-3.5-sonnet_few_shot,245,48,293,83.62
+gemini-2.5-flash_zero_shot,claude-3.5-sonnet_zero_shot,238,53,291,81.79
+gemini-2.5-flash_zero_shot,claude-3.5-sonnet_zero_shot_self_refine,157,29,186,84.41
+gemini-2.5-flash_zero_shot,gemini-1.5-flash_few_shot,211,64,275,76.73
+gemini-2.5-flash_zero_shot,gemini-1.5-flash_zero_shot,213,61,274,77.74
+gemini-2.5-flash_zero_shot,gemini-1.5-flash_zero_shot_self_refine,209,62,271,77.12
+gemini-2.5-flash_zero_shot,gemini-1.5-pro_few_shot,226,28,254,88.98
+gemini-2.5-flash_zero_shot,gemini-1.5-pro_zero_shot,227,27,254,89.37
+gemini-2.5-flash_zero_shot,gemini-1.5-pro_zero_shot_self_refine,224,28,252,88.89
+gemini-2.5-flash_zero_shot,gemini-2.5-flash_few_shot,268,25,293,91.47
+gemini-2.5-flash_zero_shot,gemini-2.5-flash_zero_shot_self_refine,271,25,296,91.55
+gemini-2.5-flash_zero_shot_self_refine,Ground Truth,203,92,295,68.81
+gemini-2.5-flash_zero_shot_self_refine,claude-3.5-sonnet_few_shot,249,46,295,84.41
+gemini-2.5-flash_zero_shot_self_refine,claude-3.5-sonnet_zero_shot,240,53,293,81.91
+gemini-2.5-flash_zero_shot_self_refine,claude-3.5-sonnet_zero_shot_self_refine,156,33,189,82.54
+gemini-2.5-flash_zero_shot_self_refine,gemini-1.5-flash_few_shot,211,66,277,76.17
+gemini-2.5-flash_zero_shot_self_refine,gemini-1.5-flash_zero_shot,213,62,275,77.45
+gemini-2.5-flash_zero_shot_self_refine,gemini-1.5-flash_zero_shot_self_refine,208,65,273,76.19
+gemini-2.5-flash_zero_shot_self_refine,gemini-1.5-pro_few_shot,222,32,254,87.4
+gemini-2.5-flash_zero_shot_self_refine,gemini-1.5-pro_zero_shot,225,28,253,88.93
+gemini-2.5-flash_zero_shot_self_refine,gemini-1.5-pro_zero_shot_self_refine,220,33,253,86.96
+gemini-2.5-flash_zero_shot_self_refine,gemini-2.5-flash_few_shot,264,28,292,90.41
+gemini-2.5-flash_zero_shot_self_refine,gemini-2.5-flash_zero_shot,268,27,295,90.85

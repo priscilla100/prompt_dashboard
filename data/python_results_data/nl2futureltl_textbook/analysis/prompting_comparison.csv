@@ -1,0 +1,5 @@
+model,best_exact_method,best_exact_score,best_semantic_method,best_semantic_score,methods_compared
+gemini-1.5-pro,zero_shot,5.71,zero_shot_self_refine,65.77,3
+gemini-1.5-flash,zero_shot,5.71,zero_shot,50.41,3
+gemini-2.5-flash,zero_shot,8.57,zero_shot_self_refine,66.67,3
+claude-3.5-sonnet,zero_shot_self_refine,7.86,zero_shot,72.13,3

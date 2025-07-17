@@ -1,7 +1,11 @@
 import streamlit as st
-
+import numpy as np
+import os
+import csv
+import json
+from collections import defaultdict
 # Set page config - MUST be the first Streamlit command
-
+from utils.optimized_results_viewer import run_python_results_viewer
 # Configure page
 st.set_page_config(
     page_title="Experiment Results Dashboard",
@@ -246,7 +250,6 @@ def create_single_metric_comparison(data, experiment_name, selected_metric, metr
         'defined_count': len(defined_df),
         'undefined_count': len(undefined_df)
     }
-
 def create_detailed_comparison_chart(comparator, experiment, metric, models=None, approaches=None):
     """Create a detailed comparison chart showing models and approaches"""
     
@@ -849,13 +852,201 @@ def create_detailed_side_by_side_comparison(data, experiment_name, selected_metr
         return comparison_df
     return None
 
-def main():
+import os
+import pandas as pd
+def plot_grouped_bar_chart(df, metric):
+    model_col = next((col for col in df.columns if "model" in col.lower()), None)
+    approach_col = next((col for col in df.columns if "approach" in col.lower()), None)
+    if not model_col or not approach_col:
+        st.error("Model or Approach column missing.")
+        return None
+
+    df["Model + Approach"] = df[model_col] + " - " + df[approach_col]
+    fig = px.bar(
+        df,
+        x="Model + Approach",
+        y=metric,
+        color=model_col,
+        title=f"{metric} Across Models and Approaches",
+    )
+    fig.update_layout(xaxis_tickangle=-45)
+    return fig
+
+def plot_line_trend(df, metric, by="Approach"):
+    model_col = next((col for col in df.columns if "model" in col.lower()), None)
+    approach_col = next((col for col in df.columns if "approach" in col.lower()), None)
+    if not model_col or not approach_col:
+        st.error("Model or Approach column missing.")
+        return None
+
+    fig = px.line(
+        df,
+        x=approach_col if by == "Approach" else model_col,
+        y=metric,
+        color=model_col if by == "Approach" else approach_col,
+        markers=True,
+        title=f"{metric} Trend by {by}"
+    )
+    return fig
+
+def plot_metrics_heatmap(df, metric_cols):
+    model_col = next((col for col in df.columns if "model" in col.lower()), None)
+    approach_col = next((col for col in df.columns if "approach" in col.lower()), None)
+
+    if not model_col or not approach_col:
+        st.error("Model or Approach column missing.")
+        return None
+
+    df["Combo"] = df[model_col] + " - " + df[approach_col]
+    subset = df.set_index("Combo")[metric_cols]
+
+    fig = px.imshow(
+        subset,
+        labels=dict(x="Metric", y="Model + Approach", color="Value"),
+        aspect="auto",
+        title="Metric Heatmap per Model+Approach"
+    )
+    return fig
+
+def plot_metric_correlation(df, metric_cols):
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+
+    corr = df[metric_cols].corr()
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.heatmap(corr, annot=True, cmap="coolwarm", fmt=".2f", ax=ax)
+    st.pyplot(fig)
+
+
+# def run_python_results_viewer():
+#     import os
+#     import pandas as pd
+
+#     st.markdown("## 🐍 Python for Prompt Results")
+#     base_dir = "data/python_results_data"
+
+#     view_mode = st.radio("Choose Mode", ["📂 View Datasets", "📊 Analyze Metrics"])
+
+#     experiments = sorted([
+#         name for name in os.listdir(base_dir)
+#         if os.path.isdir(os.path.join(base_dir, name))
+#     ])
+
+#     if not experiments:
+#         st.error("No experiments found in `python_results_data`.")
+#         return
+
+#     selected_exp = st.selectbox("Select Experiment", experiments)
+#     exp_path = os.path.join(base_dir, selected_exp)
+
+#     if view_mode == "📂 View Datasets":
+#         # List all CSV files
+#         all_files = []
+#         for root, dirs, files in os.walk(exp_path):
+#             for file in files:
+#                 if file.endswith(".csv"):
+#                     rel_path = os.path.relpath(os.path.join(root, file), base_dir)
+#                     all_files.append(rel_path)
+
+#         if not all_files:
+#             st.warning("No CSV files found.")
+#             return
+
+#         selected_file = st.selectbox("Select File", all_files)
+#         file_path = os.path.join(base_dir, selected_file)
+
+#         df = pd.read_csv(file_path)
+#         st.markdown(f"### Preview: `{selected_file}`")
+#         st.dataframe(df, use_container_width=True)
+
+#         # Show quick stats if metric columns exist
+#         metric_cols = ["Accuracy", "Precision", "F1", "Sample_Count", "Error_Count"]
+#         available_metrics = [col for col in metric_cols if col in df.columns]
+#         if available_metrics:
+#             st.subheader("📊 Metric Summary")
+#             st.write(df[available_metrics].describe())
+
+#         with open(file_path, "rb") as f:
+#             st.download_button("⬇️ Download CSV", f, file_name=os.path.basename(file_path))
+#     elif view_mode == "📊 Analyze Metrics":
+#         # Detect candidate metrics file
+#         all_csvs = []
+#         for root, dirs, files in os.walk(exp_path):
+#             for file in files:
+#                 if file.endswith(".csv"):
+#                     all_csvs.append(os.path.join(root, file))
+
+#         selected_file = st.selectbox("Select File for Analysis", all_csvs, format_func=lambda x: os.path.relpath(x, base_dir))
+
+#         if not selected_file:
+#             st.warning("No CSV file selected.")
+#             return
+
+#         df = pd.read_csv(selected_file)
+
+#         # Detect metrics — any numeric column or ending in (%)
+#         metric_cols = [col for col in df.columns if df[col].dtype in ['float64', 'int64'] or col.strip().endswith("(%)")]
+
+#         if not metric_cols:
+#             st.warning("No numeric or percentage metric columns found.")
+#             return
+
+#         selected_metric = st.selectbox("Select Metric", metric_cols)
+
+#         st.subheader(f"🔬 Analysis for `{selected_exp}` — {selected_metric}")
+
+#         from utils.analysis_helpers import (
+#             create_model_approach_comparison_from_df,
+#             create_distribution_from_df
+#         )
+
+#         fig = create_model_approach_comparison_from_df(df, selected_metric)
+#         if fig:
+#             st.plotly_chart(fig, use_container_width=True)
+
+#         dist_fig = create_distribution_from_df(df, selected_metric)
+#         if dist_fig:
+#             st.plotly_chart(dist_fig, use_container_width=True)
+
+#         st.subheader("📊 Metric Summary")
+#         st.dataframe(df[[selected_metric]].describe())
+
+#         st.subheader("📊 Chart Gallery")
+
+#         # Grouped Bar
+#         bar_fig = plot_grouped_bar_chart(df, selected_metric)
+#         if bar_fig:
+#             st.plotly_chart(bar_fig, use_container_width=True)
+
+#         # Line Trend
+#         line_fig = plot_line_trend(df, selected_metric, by="Approach")
+#         if line_fig:
+#             st.plotly_chart(line_fig, use_container_width=True)
+
+#         # Distribution
+#         # dist_fig = create_distribution_from_df(df, selected_metric)
+#         # if dist_fig:
+#         #     st.plotly_chart(dist_fig, use_container_width=True)
+
+#         # Heatmap (All metrics)
+#         metric_subset = [col for col in df.columns if "%" in col or df[col].dtype in ["float64", "int64"]]
+#         if st.checkbox("🔍 Show Heatmap for All Metrics"):
+#             heatmap_fig = plot_metrics_heatmap(df, metric_subset)
+#             if heatmap_fig:
+#                 st.plotly_chart(heatmap_fig, use_container_width=True)
+
+#         # Correlation Heatmap
+#         if st.checkbox("📈 Show Correlation Between Metrics"):
+#             plot_metric_correlation(df, metric_subset)
+
+
+def run_main_dashboard():
     # Header
     st.markdown('<div class="main-header"><h1>🔬 Experiment Results Dashboard</h1><p>Compare Defined vs Undefined Prompts Across Different Experiments</p></div>', unsafe_allow_html=True)
 
     with st.spinner("Loading experiment data..."):
         comparator = load_all_data()
-    
     metric_mappings = get_metric_mappings()
 
     # # Sidebar for controls
@@ -1089,5 +1280,17 @@ def main():
     else:
         st.error("No experiments available or selected experiment not found.")
 
+def main():
+    st.sidebar.title("📚 Navigation")
+    page = st.sidebar.radio(
+        "Go to",
+        ["Main Dashboard", "Python for Prompt Results"],
+        help="Select the dashboard section"
+    )
+    if page == "Main Dashboard":
+        run_main_dashboard()
+    elif page == "Python for Prompt Results":
+        run_python_results_viewer()
 if __name__ == "__main__":
     main()
+

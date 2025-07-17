@@ -1,0 +1,5 @@
+Model,Accuracy,Precision,F1,Sample_Count,Error_Count
+claude-3.5-sonnet,64.97,68.09,63.18,640,225
+gemini-1.5-flash,65.98,72.64,62.25,1651,562
+gemini-1.5-pro,67.60,70.35,66.43,1796,581
+gemini-2.5-flash,99.27,99.29,99.27,538,4

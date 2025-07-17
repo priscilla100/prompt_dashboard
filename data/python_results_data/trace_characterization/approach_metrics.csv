@@ -1,0 +1,4 @@
+Approach,Accuracy,Precision,F1,Sample_Count,Error_Count
+few_shot,75.31,77.23,74.40,1593,445
+zero_shot,76.30,78.28,75.40,1581,434
+zero_shot_self_refine,71.76,77.26,68.55,1451,493

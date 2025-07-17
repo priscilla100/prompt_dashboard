@@ -1,0 +1,25 @@
+=== OVERALL PERFORMANCE SUMMARY ===
+Best Exact Match: claude-3.5-sonnet with zero_shot (3.95%)
+Best Semantic Equiv: claude-3.5-sonnet with few_shot (62.67%)
+
+Average Performance by Model:
+                   exact_match_accuracy  semantic_equivalence  syntax_ok_rate
+model                                                                        
+claude-3.5-sonnet                  3.29                 59.44           85.99
+gemini-1.5-flash                   3.29                 46.55           92.94
+gemini-1.5-pro                     3.62                 57.66           83.82
+gemini-2.5-flash                   3.51                 60.16           97.18
+
+Average Performance by Prompt Type:
+                       exact_match_accuracy  semantic_equivalence  syntax_ok_rate
+prompt_type                                                                      
+few_shot                               3.61                 56.41           93.08
+zero_shot                              3.62                 55.68           93.00
+zero_shot_self_refine                  3.05                 55.77           83.88
+
+=== PROMPTING METHOD RECOMMENDATIONS ===
+            model best_exact_method  best_exact_score  best_semantic_method  best_semantic_score  methods_compared
+   gemini-1.5-pro         zero_shot              3.62             zero_shot                58.00                 3
+ gemini-1.5-flash         zero_shot              3.29 zero_shot_self_refine                47.78                 3
+ gemini-2.5-flash         zero_shot              3.62 zero_shot_self_refine                60.62                 3
+claude-3.5-sonnet         zero_shot              3.95              few_shot                62.67                 3
