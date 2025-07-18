@@ -1,0 +1,13 @@
+Model,Approach,Entail_Yes_GT_to_Pred,Entail_No_GT_to_Pred,Entail_Error_GT_to_Pred,Entail_Not_Meaningful_GT_to_Pred,Accuracy_GT_to_Pred (%),Entail_Yes_Pred_to_GT,Entail_No_Pred_to_GT,Entail_Error_Pred_to_GT,Entail_Not_Meaningful_Pred_to_GT,Accuracy_Pred_to_GT (%),Equivalent,Not_Equivalent,Equiv_Error,Equiv_Not_Meaningful,Equivalence_Accuracy (%),Syntactic_Correctness_Rate (%),Syntactic_Match_Rate (%),Precision (%),Recall (%),F1 (%)
+gemini-1.5-pro,zero_shot,186,39,52,8,82.67,187,46,52,0,80.26,157,68,52,8,69.78,82.11,0.35,69.78,82.67,75.68
+gemini-1.5-pro,zero_shot_self_refine,188,39,50,8,82.82,185,50,50,0,78.72,155,72,50,8,68.28,83.16,0.0,68.28,82.82,74.85
+gemini-1.5-pro,few_shot,185,36,55,9,83.71,183,47,55,0,79.57,155,66,55,9,70.14,81.4,0.35,70.14,83.71,76.32
+gemini-1.5-flash,zero_shot,201,50,18,16,80.08,169,95,18,3,64.02,140,111,18,16,55.78,94.74,0.35,55.78,80.08,65.75
+gemini-1.5-flash,zero_shot_self_refine,205,48,15,17,81.03,172,96,15,2,64.18,143,110,15,17,56.52,95.79,0.7,56.52,81.03,66.59
+gemini-1.5-flash,few_shot,208,43,19,15,82.87,172,93,19,1,64.91,147,104,19,15,58.57,94.04,0.7,58.57,82.87,68.63
+gemini-2.5-flash,zero_shot,226,42,14,3,84.33,224,46,14,1,82.96,192,76,14,3,71.64,96.14,1.06,71.64,84.33,77.47
+gemini-2.5-flash,zero_shot_self_refine,234,36,12,3,86.67,225,47,12,1,82.72,197,73,12,3,72.96,96.84,1.06,72.96,86.67,79.23
+gemini-2.5-flash,few_shot,226,45,8,6,83.39,227,49,8,1,82.25,191,80,8,6,70.48,98.25,1.41,70.48,83.39,76.39
+claude-3.5-sonnet,zero_shot,220,51,9,5,81.18,210,64,9,2,76.64,172,99,9,5,63.47,97.89,0.35,63.47,81.18,71.24
+claude-3.5-sonnet,zero_shot_self_refine,214,51,14,6,80.75,215,54,14,2,79.93,176,89,14,6,66.42,95.79,0.7,66.42,80.75,72.88
+claude-3.5-sonnet,few_shot,216,60,6,3,78.26,219,58,6,2,79.06,178,98,6,3,64.49,98.95,0.7,64.49,78.26,70.71

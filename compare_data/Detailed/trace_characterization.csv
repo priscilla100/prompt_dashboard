@@ -1,0 +1,16 @@
+Model,Approach,Accuracy,Precision,F1,Sample_Count,Error_Count
+gpt-3.5-turbo,zero_shot,54.9,55.54,53.56,612,276
+gpt-3.5-turbo,zero_shot_self_refine,42.32,41.16,40.36,612,353
+gpt-3.5-turbo,few_shot,56.21,57.02,54.91,612,268
+gpt-4o-mini,zero_shot,62.42,62.42,62.42,612,230
+gpt-4o-mini,zero_shot_self_refine,58.5,64.01,53.97,612,254
+gpt-4o-mini,few_shot,61.6,61.61,61.6,612,235
+gpt-4o,zero_shot,72.06,72.26,72.0,612,171
+gpt-4o,zero_shot_self_refine,61.6,62.48,60.92,612,235
+gpt-4o,few_shot,73.37,73.5,73.33,612,163
+claude-sonnet,zero_shot,80.72,80.98,80.68,612,118
+claude-sonnet,zero_shot_self_refine,65.25,65.65,65.0,610,212
+claude-sonnet,few_shot,78.07,78.34,78.01,611,134
+gemini,zero_shot,72.55,72.94,72.43,612,168
+gemini,zero_shot_self_refine,70.1,74.44,68.71,612,183
+gemini,few_shot,73.04,73.38,72.94,612,165

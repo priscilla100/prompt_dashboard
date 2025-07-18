@@ -15,7 +15,7 @@ class BenchmarkAnalyzer:
     """Comprehensive benchmark analysis system for LLM evaluation"""
     
     def __init__(self):
-        self.base_dir = "data"
+        self.base_dir = "compare_data"
         self.task_metrics = self._get_task_metrics()
         self.model_mappings = self._get_model_mappings()
         self.color_palette = px.colors.qualitative.Vivid
@@ -382,11 +382,11 @@ def run_benchmark_analysis():
         st.header("🎛️ Analysis Controls")
         
         # Strategy selection
-        strategies = ['undefined', 'defined', 'python']
+        strategies = ['Minimal', 'Detailed', 'Python']
         selected_strategies = st.multiselect(
             "Select Prompting Strategies",
             strategies,
-            default=['undefined', 'defined']
+            default=['Minimal', 'Detailed']
         )
         
         # Task selection

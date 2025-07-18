@@ -1,0 +1,16 @@
+Model,Approach,Entail_Yes_GT_to_Pred,Entail_No_GT_to_Pred,Entail_Error_GT_to_Pred,Entail_Not_Meaningful_GT_to_Pred,Accuracy_GT_to_Pred (%),Entail_Yes_Pred_to_GT,Entail_No_Pred_to_GT,Entail_Error_Pred_to_GT,Entail_Not_Meaningful_Pred_to_GT,Accuracy_Pred_to_GT (%),Equivalent,Not_Equivalent,Equiv_Error,Equiv_Not_Meaningful,Equivalence_Accuracy (%),Syntactic_Correctness_Rate (%),Syntactic_Match_Rate (%),Precision (%),Recall (%),F1 (%)
+claude-sonnet,few_shot,66,35,11,3,65.35,57,44,11,3,56.44,39,62,11,3,38.61,93.04,20.87,38.61,65.35,48.54
+claude-sonnet,zero_shot,57,32,8,18,64.04,51,40,8,16,56.04,38,51,8,18,42.7,96.52,19.13,42.7,64.04,51.23
+claude-sonnet,zero_shot_self_refine,44,44,20,7,50.0,60,25,20,10,70.59,34,54,20,7,38.64,85.22,8.7,38.64,50.0,43.59
+gemini,few_shot,77,27,9,2,74.04,74,31,9,1,70.48,58,46,9,2,55.77,95.65,28.7,55.77,74.04,63.62
+gemini,zero_shot,69,29,5,12,70.41,60,38,5,12,61.22,48,50,5,12,48.98,99.13,15.65,48.98,70.41,57.77
+gemini,zero_shot_self_refine,69,28,13,5,71.13,62,33,13,7,65.26,51,46,13,5,52.58,91.3,14.78,52.58,71.13,60.46
+gpt-3.5-turbo,few_shot,58,46,5,6,55.77,42,62,5,6,40.38,26,78,5,6,25.0,99.13,13.91,25.0,55.77,34.52
+gpt-3.5-turbo,zero_shot,40,51,10,14,43.96,53,37,10,15,58.89,31,60,10,14,34.07,93.91,3.48,34.07,43.96,38.39
+gpt-3.5-turbo,zero_shot_self_refine,29,65,12,9,30.85,56,35,12,12,61.54,20,74,12,9,21.28,93.04,3.48,21.28,30.85,25.18
+gpt-4o-mini,few_shot,68,40,4,3,62.96,50,58,4,3,46.3,32,76,4,3,29.63,100.0,16.52,29.63,62.96,40.3
+gpt-4o-mini,zero_shot,74,33,5,3,69.16,57,53,5,0,51.82,44,63,5,3,41.12,99.13,13.04,41.12,69.16,51.58
+gpt-4o-mini,zero_shot_self_refine,71,36,4,4,66.36,60,47,4,4,56.07,45,62,4,4,42.06,100.0,13.04,42.06,66.36,51.48
+gpt-4o,few_shot,76,29,9,1,72.38,79,26,9,1,75.24,61,44,9,1,58.1,95.65,30.43,58.1,72.38,64.46
+gpt-4o,zero_shot,75,28,9,3,72.82,66,40,9,0,62.26,52,51,9,3,50.49,95.65,13.91,50.49,72.82,59.63
+gpt-4o,zero_shot_self_refine,70,33,10,2,67.96,69,36,10,0,65.71,53,50,10,2,51.46,94.78,13.04,51.46,67.96,58.57
