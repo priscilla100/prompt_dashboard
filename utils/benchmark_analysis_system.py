@@ -18,7 +18,7 @@ class BenchmarkAnalyzer:
         self.base_dir = "data"
         self.task_metrics = self._get_task_metrics()
         self.model_mappings = self._get_model_mappings()
-        self.color_palette = px.colors.qualitative.Set3
+        self.color_palette = px.colors.qualitative.Vivid
         
     def _get_task_metrics(self) -> Dict[str, Dict[str, str]]:
         """Define metrics for each task"""
