@@ -227,7 +227,7 @@ def run_python_results_viewer():
     # Enhanced sidebar controls
     with st.sidebar:
         st.header("🎛️ Controls")
-        view_mode = st.radio("Choose Mode", ["📊 Interactive Analysis", "📂 Dataset Explorer", "🔍 Advanced Metrics", "⚖️ Cross-Experiment Compare"])
+        view_mode = st.radio("Choose Mode", ["📊 Interactive Analysis", "📂 Dataset Explorer", "🔍 Advanced Metrics"])
         
         color_scheme = st.selectbox("Color Scheme", ["modern", "vibrant", "professional", "gradient"])
         show_stats = st.checkbox("Show Statistics", value=True)
@@ -243,249 +243,44 @@ def run_python_results_viewer():
         st.error("No experiments found in `python_results_data`.")
         return
     
-    # Get ALL CSV files across ALL experiments for cross-comparison
-    def get_all_csv_files():
-        all_files = {}
-        for exp in experiments:
-            exp_path = os.path.join(base_dir, exp)
-            files = []
-            for root, dirs, file_list in os.walk(exp_path):
-                for file in file_list:
-                    if file.endswith(".csv"):
-                        rel_path = os.path.relpath(os.path.join(root, file), base_dir)
-                        files.append(rel_path)
-            all_files[exp] = files
-        return all_files
+    # Two-column layout for better UX
+    col1, col2 = st.columns([1, 2])
     
-    all_csv_files = get_all_csv_files()
+    with col1:
+        selected_exp = st.selectbox("🧪 Select Experiment", experiments)
+        exp_path = os.path.join(base_dir, selected_exp)
+        
+        # Get all CSV files
+        all_files = []
+        for root, dirs, files in os.walk(exp_path):
+            for file in files:
+                if file.endswith(".csv"):
+                    rel_path = os.path.relpath(os.path.join(root, file), base_dir)
+                    all_files.append(rel_path)
+        
+        if not all_files:
+            st.error("No CSV files found.")
+            return
+        
+        selected_file = st.selectbox("📄 Select Dataset", all_files)
     
-    if view_mode == "⚖️ Cross-Experiment Compare":
-        st.markdown("### 📊 Cross-Experiment Dataset Comparison")
-        
-        # Two-column layout for dataset selection
-        comp_col1, comp_col2 = st.columns(2)
-        
-        with comp_col1:
-            st.markdown("#### 🔵 Dataset A")
-            exp_a = st.selectbox("Select Experiment A", experiments, key="exp_a")
+    with col2:
+        if selected_file:
+            file_path = os.path.join(base_dir, selected_file)
+            df = pd.read_csv(file_path)
             
-            if exp_a in all_csv_files and all_csv_files[exp_a]:
-                file_a = st.selectbox("Select Dataset A", all_csv_files[exp_a], key="file_a")
-                if file_a:
-                    df_a = pd.read_csv(os.path.join(base_dir, file_a))
-                    st.info(f"**Shape:** {df_a.shape[0]} rows × {df_a.shape[1]} columns")
-                    st.dataframe(df_a.head(3), use_container_width=True)
-            else:
-                st.error(f"No CSV files found in {exp_a}")
-                return
-        
-        with comp_col2:
-            st.markdown("#### 🔴 Dataset B")
-            exp_b = st.selectbox("Select Experiment B", experiments, key="exp_b")
+            # Initialize analyzer
+            analyzer = DataAnalyzer(df)
+            chart_gen = ModernChartGenerator(df, analyzer)
             
-            if exp_b in all_csv_files and all_csv_files[exp_b]:
-                file_b = st.selectbox("Select Dataset B", all_csv_files[exp_b], key="file_b")
-                if file_b:
-                    df_b = pd.read_csv(os.path.join(base_dir, file_b))
-                    st.info(f"**Shape:** {df_b.shape[0]} rows × {df_b.shape[1]} columns")
-                    st.dataframe(df_b.head(3), use_container_width=True)
-            else:
-                st.error(f"No CSV files found in {exp_b}")
-                return
-        
-        # Comparison analysis
-        if 'df_a' in locals() and 'df_b' in locals():
-            st.markdown("### 🔍 Comparison Analysis")
-            
-            # Find common columns
-            common_cols = set(df_a.columns) & set(df_b.columns)
-            analyzer_a = DataAnalyzer(df_a)
-            analyzer_b = DataAnalyzer(df_b)
-            
-            # Find common metrics
-            common_metrics = set(analyzer_a.metric_cols) & set(analyzer_b.metric_cols)
-            common_grouping = set(analyzer_a.grouping_cols) & set(analyzer_b.grouping_cols)
-            
-            if not common_metrics:
-                st.warning("No common metric columns found between the datasets.")
-                st.write("**Dataset A metrics:**", analyzer_a.metric_cols)
-                st.write("**Dataset B metrics:**", analyzer_b.metric_cols)
-                return
-            
-            # Comparison controls
-            comp_control1, comp_control2 = st.columns(2)
-            
-            with comp_control1:
-                compare_metric = st.selectbox("Compare Metric", list(common_metrics))
-                
-            with comp_control2:
-                if common_grouping:
-                    group_by_comp = st.selectbox("Group By", list(common_grouping))
-                else:
-                    group_by_comp = None
-                    st.info("No common grouping columns found")
-            
-            # Create comparison dataframe
-            df_a_comp = df_a.copy()
-            df_b_comp = df_b.copy()
-            df_a_comp['Dataset'] = f"{exp_a} ({os.path.basename(file_a)})"
-            df_b_comp['Dataset'] = f"{exp_b} ({os.path.basename(file_b)})"
-            
-            # Combine datasets
-            df_combined = pd.concat([df_a_comp, df_b_comp], ignore_index=True)
-            
-            # Create comparison charts
-            st.markdown("#### 📊 Side-by-Side Comparison")
-            
-            if group_by_comp:
-                # Grouped comparison
-                fig = px.bar(
-                    df_combined,
-                    x=group_by_comp,
-                    y=compare_metric,
-                    color='Dataset',
-                    barmode='group',
-                    title=f"{compare_metric} Comparison Across Experiments",
-                    color_discrete_sequence=['#1f77b4', '#ff7f0e'],
-                    height=500
-                )
-                
-                fig.update_layout(
-                    xaxis_title=group_by_comp,
-                    yaxis_title=compare_metric,
-                    legend_title="Experiment"
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
-                
-                # Statistical comparison
-                st.markdown("#### 📈 Statistical Comparison")
-                
-                stats_col1, stats_col2 = st.columns(2)
-                
-                with stats_col1:
-                    st.markdown("**Dataset A Stats**")
-                    st.dataframe(df_a_comp.groupby(group_by_comp)[compare_metric].agg(['mean', 'std', 'count']))
-                
-                with stats_col2:
-                    st.markdown("**Dataset B Stats**")
-                    st.dataframe(df_b_comp.groupby(group_by_comp)[compare_metric].agg(['mean', 'std', 'count']))
-            
-            else:
-                # Overall comparison
-                fig = px.box(
-                    df_combined,
-                    x='Dataset',
-                    y=compare_metric,
-                    color='Dataset',
-                    title=f"{compare_metric} Distribution Comparison",
-                    color_discrete_sequence=['#1f77b4', '#ff7f0e']
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
-            
-            # Advanced comparison visualizations
-            st.markdown("#### 🎯 Advanced Comparisons")
-            
-            comparison_type = st.selectbox("Comparison Type", [
-                "📊 Violin Distribution", 
-                "🎯 Radar Multi-Metric",
-                "📈 Trend Analysis"
-            ])
-            
-            if comparison_type == "📊 Violin Distribution":
-                fig = px.violin(
-                    df_combined,
-                    x='Dataset',
-                    y=compare_metric,
-                    color='Dataset',
-                    title=f"{compare_metric} Distribution Comparison",
-                    box=True
-                )
-                st.plotly_chart(fig, use_container_width=True)
-            
-            elif comparison_type == "🎯 Radar Multi-Metric":
-                if len(common_metrics) >= 3:
-                    selected_metrics = st.multiselect(
-                        "Select metrics for radar comparison", 
-                        list(common_metrics), 
-                        default=list(common_metrics)[:5]
-                    )
-                    
-                    if selected_metrics:
-                        fig = go.Figure()
-                        
-                        # Calculate means for each dataset
-                        means_a = [df_a[metric].mean() for metric in selected_metrics]
-                        means_b = [df_b[metric].mean() for metric in selected_metrics]
-                        
-                        fig.add_trace(go.Scatterpolar(
-                            r=means_a,
-                            theta=selected_metrics,
-                            fill='toself',
-                            name=f"{exp_a}",
-                            line=dict(color='#1f77b4', width=3)
-                        ))
-                        
-                        fig.add_trace(go.Scatterpolar(
-                            r=means_b,
-                            theta=selected_metrics,
-                            fill='toself',
-                            name=f"{exp_b}",
-                            line=dict(color='#ff7f0e', width=3)
-                        ))
-                        
-                        fig.update_layout(
-                            polar=dict(
-                                radialaxis=dict(visible=True, range=[0, max(means_a + means_b) * 1.1])
-                            ),
-                            showlegend=True,
-                            title="Multi-Metric Radar Comparison",
-                            height=600
-                        )
-                        
-                        st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.info("Need at least 3 common metrics for radar chart")
-    
-    else:
-        # Original single experiment analysis
-        # Two-column layout for better UX
-        col1, col2 = st.columns([1, 2])
-        
-        with col1:
-            selected_exp = st.selectbox("🧪 Select Experiment", experiments)
-            exp_path = os.path.join(base_dir, selected_exp)
-            
-            # Get all CSV files
-            all_files = []
-            for root, dirs, files in os.walk(exp_path):
-                for file in files:
-                    if file.endswith(".csv"):
-                        rel_path = os.path.relpath(os.path.join(root, file), base_dir)
-                        all_files.append(rel_path)
-            
-            if not all_files:
-                st.error("No CSV files found.")
-                return
-            
-            selected_file = st.selectbox("📄 Select Dataset", all_files)
-        
-        with col2:
-            if selected_file:
-                file_path = os.path.join(base_dir, selected_file)
-                df = pd.read_csv(file_path)
-                
-                # Initialize analyzer
-                analyzer = DataAnalyzer(df)
-                chart_gen = ModernChartGenerator(df, analyzer)
-                
-                # Display dataset info
-                st.info(f"**Dataset:** {selected_file} | **Shape:** {df.shape[0]} rows × {df.shape[1]} columns")
+            # Display dataset info
+            st.info(f"**Dataset:** {selected_file} | **Shape:** {df.shape[0]} rows × {df.shape[1]} columns")
     
     if view_mode == "📊 Interactive Analysis":
         # Dynamic control panel
         st.markdown("### 🎯 Interactive Controls")
+
+        f'{selected_exp.upper()}'
         
         control_col1, control_col2, control_col3 = st.columns(3)
         
@@ -621,5 +416,4 @@ def run_python_results_viewer():
     
     # Footer with dynamic info
     st.markdown("---")
-    if 'analyzer' in locals():
-        st.markdown(f"**Detected Structure:** {len(analyzer.metric_cols)} metrics, {len(analyzer.grouping_cols)} grouping columns, {len(analyzer.categorical_cols)} categorical features")
+    st.markdown(f"**Detected Structure:** {len(analyzer.metric_cols)} metrics, {len(analyzer.grouping_cols)} grouping columns, {len(analyzer.categorical_cols)} categorical features")

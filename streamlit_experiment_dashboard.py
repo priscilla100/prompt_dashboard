@@ -6,6 +6,9 @@ import json
 from collections import defaultdict
 # Set page config - MUST be the first Streamlit command
 from utils.optimized_results_viewer import run_python_results_viewer
+from utils.benchmark_dashboard import run_benchmark_results
+from utils.comprehensive_benchmark_dashboard import run_benchmark_dashboard
+from utils.benchmark_analysis_system import run_benchmark_analysis
 # Configure page
 st.set_page_config(
     page_title="Experiment Results Dashboard",
@@ -1039,8 +1042,51 @@ def plot_metric_correlation(df, metric_cols):
 #         # Correlation Heatmap
 #         if st.checkbox("📈 Show Correlation Between Metrics"):
 #             plot_metric_correlation(df, metric_subset)
+# def main():
+#     st.set_page_config(
+#         page_title="Benchmark Analysis Dashboard",
+#         page_icon="🏆",
+#         layout="wide",
+#         initial_sidebar_state="expanded"
+#     )
+    
+#     st.sidebar.title("📚 Navigation")
+#     page = st.sidebar.radio(
+#         "Go to",
+#         ["🏆 Benchmark Dashboard", "🐍 Python Results Analyzer"],
+#         help="Select the dashboard section"
+#     )
+    
+#     if page == "🏆 Benchmark Dashboard":
+#         run_benchmark_dashboard()
+#     elif page == "🐍 Python Results Analyzer":
+#         run_python_results_viewer()
+
+# if __name__ == "__main__":
+#     main()
 
 
+def main():
+    # Remove st.set_page_config() from here since it's already called in your existing app
+    
+    st.sidebar.title("📚 Navigation")
+    page = st.sidebar.radio(
+        "Go to",
+        ["🎯 Benchmark Analysis", "🏆 Benchmark Dashboard","Main Dashboard", "Python for Prompt Results"],
+        help="Select the dashboard section"
+    )
+    if page == "🎯 Benchmark Analysis":
+        run_benchmark_analysis()
+    elif page == "🏆 Benchmark Dashboard":
+        run_benchmark_dashboard()
+    elif page == "Main Dashboard":
+        run_main_dashboard()
+    elif page == "Python for Prompt Results":
+        run_python_results_viewer()
+    elif page == "Benchmark Results":
+        run_benchmark_results()
+    
+# Your existing run_main_dashboard() function (from the paste.txt)
 def run_main_dashboard():
     # Header
     st.markdown('<div class="main-header"><h1>🔬 Experiment Results Dashboard</h1><p>Compare Defined vs Undefined Prompts Across Different Experiments</p></div>', unsafe_allow_html=True)
@@ -1280,17 +1326,5 @@ def run_main_dashboard():
     else:
         st.error("No experiments available or selected experiment not found.")
 
-def main():
-    st.sidebar.title("📚 Navigation")
-    page = st.sidebar.radio(
-        "Go to",
-        ["Main Dashboard", "Python for Prompt Results"],
-        help="Select the dashboard section"
-    )
-    if page == "Main Dashboard":
-        run_main_dashboard()
-    elif page == "Python for Prompt Results":
-        run_python_results_viewer()
 if __name__ == "__main__":
     main()
-

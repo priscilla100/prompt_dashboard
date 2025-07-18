@@ -1,0 +1,13 @@
+Model,Total Formulas,Exact Matches,Errors,Wrong,Accuracy (%),Avg. Nesting Depth,Avg. Operator Overlap
+claude-3.5-sonnet_few_shot,140,11,10,119,7.86,3.08,1.52
+claude-3.5-sonnet_zero_shot,140,10,6,124,7.14,3.14,1.51
+claude-3.5-sonnet_zero_shot_self_refine,140,11,9,120,7.86,3.14,1.55
+gemini-1.5-flash_few_shot,140,8,1,131,5.71,3.09,1.24
+gemini-1.5-flash_zero_shot,140,8,1,131,5.71,3.14,1.32
+gemini-1.5-flash_zero_shot_self_refine,140,8,3,129,5.71,3.15,1.25
+gemini-1.5-pro_few_shot,140,8,17,115,5.71,2.69,1.35
+gemini-1.5-pro_zero_shot,140,8,17,115,5.71,2.71,1.37
+gemini-1.5-pro_zero_shot_self_refine,140,8,18,114,5.71,2.61,1.33
+gemini-2.5-flash_few_shot,140,9,1,130,6.43,3.51,1.48
+gemini-2.5-flash_zero_shot,140,12,1,127,8.57,3.44,1.47
+gemini-2.5-flash_zero_shot_self_refine,140,11,1,128,7.86,3.49,1.53
