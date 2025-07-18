@@ -4,3 +4,4 @@ plotly
 dash
 numpy
 seaborn
+scipy
