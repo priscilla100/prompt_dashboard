@@ -246,46 +246,46 @@ class BenchmarkAnalyzer:
         
         return fig
     
-    def create_radar_chart(self, data_dict: Dict[str, pd.DataFrame], metrics: List[str], task: str) -> go.Figure:
-        """Create radar chart for multi-metric comparison"""
-        fig = go.Figure()
+    # def create_radar_chart(self, data_dict: Dict[str, pd.DataFrame], metrics: List[str], task: str) -> go.Figure:
+    #     """Create radar chart for multi-metric comparison"""
+    #     fig = go.Figure()
         
-        colors = px.colors.qualitative.Set3
+    #     colors = px.colors.qualitative.Set3
         
-        for idx, (strategy, df) in enumerate(data_dict.items()):
-            if df is not None:
-                values = []
-                for metric in metrics:
-                    if metric in df.columns:
-                        values.append(df[metric].mean())
-                    else:
-                        values.append(0)
+    #     for idx, (strategy, df) in enumerate(data_dict.items()):
+    #         if df is not None:
+    #             values = []
+    #             for metric in metrics:
+    #                 if metric in df.columns:
+    #                     values.append(df[metric].mean())
+    #                 else:
+    #                     values.append(0)
                 
-                fig.add_trace(go.Scatterpolar(
-                    r=values,
-                    theta=metrics,
-                    fill='toself',
-                    name=strategy.title(),
-                    line=dict(color=colors[idx % len(colors)], width=2),
-                    fillcolor=f'rgba({int(colors[idx % len(colors)][4:6], 16)}, {int(colors[idx % len(colors)][6:8], 16)}, {int(colors[idx % len(colors)][8:10], 16)}, 0.3)'
-                ))
+    #             fig.add_trace(go.Scatterpolar(
+    #                 r=values,
+    #                 theta=metrics,
+    #                 fill='toself',
+    #                 name=strategy.title(),
+    #                 line=dict(color=colors[idx % len(colors)], width=2),
+    #                 fillcolor=f'rgba({int(colors[idx % len(colors)][4:6], 16)}, {int(colors[idx % len(colors)][6:8], 16)}, {int(colors[idx % len(colors)][8:10], 16)}, 0.3)'
+    #             ))
         
-        fig.update_layout(
-            polar=dict(
-                radialaxis=dict(
-                    visible=True,
-                    range=[0, max([
-                        max([df[m].mean() for m in metrics if m in df.columns]) 
-                        for df in data_dict.values() if df is not None
-                    ]) * 1.1]
-                )
-            ),
-            showlegend=True,
-            title=f"{task} - Multi-Metric Radar Comparison",
-            height=600
-        )
+    #     fig.update_layout(
+    #         polar=dict(
+    #             radialaxis=dict(
+    #                 visible=True,
+    #                 range=[0, max([
+    #                     max([df[m].mean() for m in metrics if m in df.columns]) 
+    #                     for df in data_dict.values() if df is not None
+    #                 ]) * 1.1]
+    #             )
+    #         ),
+    #         showlegend=True,
+    #         title=f"{task} - Multi-Metric Radar Comparison",
+    #         height=600
+    #     )
         
-        return fig
+    #     return fig
     
     def create_performance_heatmap(self, data_dict: Dict[str, pd.DataFrame], metrics: List[str], task: str) -> go.Figure:
         """Create heatmap showing performance across strategies and metrics"""
@@ -424,7 +424,7 @@ def run_benchmark_analysis():
                         # Chart type selection
                         chart_types = [
                             "📊 Comparison Bar Chart",
-                            "🎯 Multi-Metric Radar",
+                            # "🎯 Multi-Metric Radar",
                             "🔥 Performance Heatmap",
                             "📈 Model Comparison Line",
                             "📊 Statistical Summary"
@@ -457,18 +457,18 @@ def run_benchmark_analysis():
                     fig = analyzer.create_comparison_bar_chart(data_dict, selected_metric, selected_task)
                     st.plotly_chart(fig, use_container_width=True)
                 
-                elif chart_type == "🎯 Multi-Metric Radar":
-                    st.markdown("### 🎯 Multi-Metric Radar Analysis")
-                    # Select multiple metrics for radar chart
-                    radar_metrics = st.multiselect(
-                        "Select Metrics for Radar Chart",
-                        valid_metrics,
-                        default=valid_metrics[:5]
-                    )
+                # elif chart_type == "🎯 Multi-Metric Radar":
+                #     st.markdown("### 🎯 Multi-Metric Radar Analysis")
+                #     # Select multiple metrics for radar chart
+                #     radar_metrics = st.multiselect(
+                #         "Select Metrics for Radar Chart",
+                #         valid_metrics,
+                #         default=valid_metrics[:5]
+                #     )
                     
-                    if radar_metrics:
-                        fig = analyzer.create_radar_chart(data_dict, radar_metrics, selected_task)
-                        st.plotly_chart(fig, use_container_width=True)
+                #     if radar_metrics:
+                #         fig = analyzer.create_radar_chart(data_dict, radar_metrics, selected_task)
+                #         st.plotly_chart(fig, use_container_width=True)
                 
                 elif chart_type == "🔥 Performance Heatmap":
                     st.markdown("### 🔥 Performance Heatmap")
