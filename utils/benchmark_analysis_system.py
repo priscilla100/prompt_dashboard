@@ -205,7 +205,7 @@ class BenchmarkAnalyzer:
             shared_yaxes=True
         )
         
-        colors = px.colors.qualitative.Set3
+        colors = px.colors.qualitative.Set1
         
         for idx, (strategy, df) in enumerate(data_dict.items()):
             if df is not None and metric in df.columns:
@@ -337,7 +337,7 @@ class BenchmarkAnalyzer:
             if df is not None and 'Model' in df.columns:
                 all_models.update(df['Model'].unique())
         
-        colors = px.colors.qualitative.Set3
+        colors = px.colors.qualitative.Set1
         
         for idx, model in enumerate(sorted(all_models)):
             x_vals = []
