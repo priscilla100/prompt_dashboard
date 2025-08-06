@@ -2,9 +2,9 @@ Model,Approach,Total_Samples,Accuracy,Precision,Recall,F1,Jaccard,Levenshtein
 claude-sonnet,few_shot,143,66.69,73.37,69.32,70.68,0.87,2.68
 claude-sonnet,zero_shot,143,64.21,71.39,67.62,68.84,0.86,3.13
 claude-sonnet,zero_shot_self_refine,143,64.63,71.95,67.86,69.27,0.86,3.00
-gemini,few_shot,143,68.20,75.41,71.64,72.77,0.88,2.56
-gemini,zero_shot,143,62.71,70.21,66.69,67.66,0.85,3.11
-gemini,zero_shot_self_refine,143,62.82,70.21,66.22,67.55,0.85,3.09
+gemini-1.5-flash,few_shot,143,68.20,75.41,71.64,72.77,0.88,2.56
+gemini-1.5-flash,zero_shot,143,62.71,70.21,66.69,67.66,0.85,3.11
+gemini-1.5-flash,zero_shot_self_refine,143,62.82,70.21,66.22,67.55,0.85,3.09
 gpt-3.5-turbo,few_shot,143,66.98,74.22,70.19,71.52,0.87,2.93
 gpt-3.5-turbo,zero_shot,143,58.23,64.78,61.50,62.47,0.83,3.78
 gpt-3.5-turbo,zero_shot_self_refine,143,59.56,65.94,63.54,64.16,0.83,3.78

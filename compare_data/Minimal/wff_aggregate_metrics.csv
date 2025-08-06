@@ -2,9 +2,9 @@ Model,Approach,Total_Samples,Yes_Samples,No_Samples,True_Positives,True_Negative
 claude-sonnet,few_shot,299,150,149,48,115,34,102,54.52,58.54,32.00,41.38
 claude-sonnet,zero_shot,299,150,149,61,106,43,89,55.85,58.65,40.67,48.03
 claude-sonnet,zero_shot_self_refine,299,150,149,35,131,18,115,55.52,66.04,23.33,34.48
-gemini,few_shot,299,150,149,42,115,34,108,52.51,55.26,28.00,37.17
-gemini,zero_shot,299,150,149,39,108,41,111,49.16,48.75,26.00,33.91
-gemini,zero_shot_self_refine,299,150,149,30,120,29,120,50.17,50.85,20.00,28.71
+gemini-1.5-flash,few_shot,299,150,149,42,115,34,108,52.51,55.26,28.00,37.17
+gemini-1.5-flash,zero_shot,299,150,149,39,108,41,111,49.16,48.75,26.00,33.91
+gemini-1.5-flash,zero_shot_self_refine,299,150,149,30,120,29,120,50.17,50.85,20.00,28.71
 gpt-3.5-turbo,few_shot,299,150,149,56,132,17,94,62.88,76.71,37.33,50.22
 gpt-3.5-turbo,zero_shot,299,150,149,43,139,10,107,60.87,81.13,28.67,42.36
 gpt-3.5-turbo,zero_shot_self_refine,299,150,149,92,71,78,58,54.52,54.12,61.33,57.50

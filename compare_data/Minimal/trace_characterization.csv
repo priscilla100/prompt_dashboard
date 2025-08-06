@@ -11,6 +11,6 @@ gpt-4o,few_shot,64.20,65.50,63.40,612,219
 claude-sonnet,zero_shot,59.00,62.70,55.80,612,251
 claude-sonnet,zero_shot_self_refine,54.10,54.80,52.20,612,281
 claude-sonnet,few_shot,55.90,61.30,49.90,612,270
-gemini,zero_shot,71.60,72.00,71.40,612,174
-gemini,zero_shot_self_refine,65.00,76.60,60.80,612,214
-gemini,few_shot,76.00,77.60,75.60,612,147
+gemini-1.5-flash,zero_shot,71.60,72.00,71.40,612,174
+gemini-1.5-flash,zero_shot_self_refine,65.00,76.60,60.80,612,214
+gemini-1.5-flash,few_shot,76.00,77.60,75.60,612,147
