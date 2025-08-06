@@ -1,17 +1,17 @@
 import streamlit as st
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import numpy as np
 import os
-import csv
-import json
-from collections import defaultdict
-# Set page config - MUST be the first Streamlit command
-from utils.optimized_results_viewer import run_python_results_viewer
-from utils.benchmark_dashboard import run_benchmark_results
-from utils.comprehensive_benchmark_dashboard import run_benchmark_dashboard
-from utils.benchmark_analysis_system import run_benchmark_analysis
-# Configure page
+from scipy import stats
+import seaborn as sns
+from pathlib import Path
+
+# Page configuration
 st.set_page_config(
-    page_title="Experiment Results Dashboard",
+    page_title="Dynamic Benchmark Comparative Analysis",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -21,219 +21,287 @@ st.set_page_config(
 st.markdown("""
 <style>
     .main-header {
+        font-size: 3rem;
+        font-weight: bold;
         text-align: center;
-        padding: 1rem 0;
         margin-bottom: 2rem;
         background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 10px;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .section-header {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 2rem 0 1rem 0;
+        color: #2E4057;
+        border-bottom: 3px solid #667eea;
+        padding-bottom: 0.5rem;
     }
     .metric-card {
-        background: #f8f9fa;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
         padding: 1rem;
-        border-radius: 8px;
-        border-left: 4px solid #667eea;
-        margin: 0.5rem 0;
+        border-radius: 10px;
+        text-align: center;
+        margin: 0.5rem;
     }
-    .comparison-section {
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
+    .insight-box {
+        background-color: #f0f2f6;
+        border-left: 5px solid #667eea;
         padding: 1rem;
         margin: 1rem 0;
+        border-radius: 5px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import os
+# Title
+st.markdown('<h1 class="main-header">🚀 Dynamic Benchmark Comparative Analysis</h1>', unsafe_allow_html=True)
 
-class ExperimentComparator:
-    def __init__(self):
-        self.data = {}
-        
-    def load_data(self, experiment_name, defined_path, undefined_path):
-        """Load data for both defined and undefined experiments"""
-        defined_df = pd.read_csv(defined_path)
-        undefined_df = pd.read_csv(undefined_path)
-        
-        self.data[experiment_name] = {
-            'defined': defined_df,
-            'undefined': undefined_df
-        }
+# Experiment configurations
+experiment_options = [
+    {'label': 'NL2PL', 'value': 'nl2pl'},
+    {'label': 'NL2 Future LTL', 'value': 'nl2futureltl'},
+    {'label': 'NL2 Past LTL', 'value': 'nl2pastltl'},
+    {'label': 'Textbook NL2 Future LTL', 'value': 'textbook_nl2futureltl'},
+    {'label': 'WFF Classification', 'value': 'wff'},
+    {'label': 'Trace Generation', 'value': 'trace_generation'},
+    {'label': 'Trace Characterization', 'value': 'trace_characterization'}
+]
+
+# Analysis modes
+ANALYSIS_MODES = {
+    'Strategy Comparison': 'strategy',
+    'Model-Approach-Metric Analysis': 'model_approach_metric'
+}
+
+# Metric mappings
+metric_mappings = {
+    'nl2pl': {
+        'Accuracy': 'Accuracy',
+        'Precision': 'Precision', 
+        'Recall': 'Recall',
+        'F1 Score': 'F1',
+        'Jaccard Index': 'Jaccard',
+        'Levenshtein Distance': 'Levenshtein'
+    },
+    'nl2futureltl': {
+        'GT→Pred Accuracy': 'Accuracy_GT_to_Pred (%)',
+        'Pred→GT Accuracy': 'Accuracy_Pred_to_GT (%)',
+        'Equivalence Accuracy': 'Equivalence_Accuracy (%)',
+        'Syntactic Correctness': 'Syntactic_Correctness_Rate (%)',
+        'Syntactic Match': 'Syntactic_Match_Rate (%)',
+        'Precision': 'Precision (%)',
+        'Recall': 'Recall (%)',
+        'F1 Score': 'F1 (%)'
+    },
+    'nl2pastltl': {
+        'GT→Pred Accuracy': 'Accuracy_GT_to_Pred (%)',
+        'Pred→GT Accuracy': 'Accuracy_Pred_to_GT (%)',
+        'Equivalence Accuracy': 'Equivalence_Accuracy (%)',
+        'Syntactic Correctness': 'Syntactic_Correctness_Rate (%)',
+        'Syntactic Match': 'Syntactic_Match_Rate (%)',
+        'Precision': 'Precision (%)',
+        'Recall': 'Recall (%)',
+        'F1 Score': 'F1 (%)'
+    },
+    'textbook_nl2futureltl': {
+        'GT→Pred Accuracy': 'Accuracy_GT_to_Pred (%)',
+        'Pred→GT Accuracy': 'Accuracy_Pred_to_GT (%)',
+        'Equivalence Accuracy': 'Equivalence_Accuracy (%)',
+        'Syntactic Correctness': 'Syntactic_Correctness_Rate (%)',
+        'Syntactic Match': 'Syntactic_Match_Rate (%)',
+        'Precision': 'Precision (%)',
+        'Recall': 'Recall (%)',
+        'F1 Score': 'F1 (%)'
+    },
+    'wff': {
+        'Accuracy': 'Accuracy',
+        'Precision': 'Precision',
+        'Recall': 'Recall',
+        'F1 Score': 'F1_Score'
+    },
+    'trace_generation': {
+        'Accuracy': 'Accuracy',
+        'Precision': 'Precision',
+        'Recall': 'Recall',
+        'F1 Score': 'F1_Score',
+        'Positive Satisfaction Rate': 'Positive_Satisfaction_Rate',
+        'Negative Falsification Rate': 'Negative_Falsification_Rate'
+    },
+    'trace_characterization': {
+        'Accuracy': 'Accuracy',
+        'Precision': 'Precision',
+        'F1 Score': 'F1'
+    }
+}
+
+# File mappings for experiments
+file_mappings = {
+    'nl2pl': 'nl2pl_aggregated_results.csv',
+    'nl2futureltl': 'comprehensive_table_future_little_tricky.csv',
+    'nl2pastltl': 'comprehensive_table_past_little_tricky.csv',
+    'textbook_nl2futureltl': 'comprehensive_table_future_textbook.csv',
+    'wff': 'wff_aggregate_metrics.csv',
+    'trace_generation': 'trace_generation.csv',
+    'trace_characterization': 'trace_characterization.csv'
+}
 
 @st.cache_data
-def load_all_data():
-    """Load all experiment data"""
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    comparator = ExperimentComparator()
-    
-    # Define file paths
-    experiments_paths = {
-        'NL2FutureLTL': {
-            'defined': os.path.join(script_dir, 'data', 'defined', 'comprehensive_table_future_little_tricky.csv'),
-            'undefined': os.path.join(script_dir, 'data', 'undefined', 'comprehensive_table_future_little_tricky.csv')
-        },
-        'NL2PL': {
-            'defined': os.path.join(script_dir, 'data', 'defined', 'nl2pl_aggregated_results.csv'),
-            'undefined': os.path.join(script_dir, 'data', 'undefined', 'nl2pl_aggregated_results.csv')
-        },
-        'WFF': {
-            'defined': os.path.join(script_dir, 'data', 'defined', 'wff_aggregate_metrics.csv'),
-            'undefined': os.path.join(script_dir, 'data', 'undefined', 'wff_aggregate_metrics.csv')
-        },
-        'Textbook NL2FutureLTL': {
-            'defined': os.path.join(script_dir, 'data', 'defined', 'comprehensive_table_future_textbook.csv'),
-            'undefined': os.path.join(script_dir, 'data', 'undefined', 'comprehensive_table_future_textbook.csv')
-        },
-        'NL2PastLTL': {
-            'defined': os.path.join(script_dir, 'data', 'defined', 'comprehensive_table_past_little_tricky.csv'),
-            'undefined': os.path.join(script_dir, 'data', 'undefined', 'comprehensive_table_past_little_tricky.csv')
-        },
-        'Trace Characterization': {
-            'defined': os.path.join(script_dir, 'data', 'defined', 'trace_characterization.csv'),
-            'undefined': os.path.join(script_dir, 'data', 'undefined', 'trace_characterization.csv')
-        },
-        'Trace Generation': {
-            'defined': os.path.join(script_dir, 'data', 'defined', 'trace_generation.csv'),
-            'undefined': os.path.join(script_dir, 'data', 'undefined', 'trace_generation.csv')
-        }
-    }
-    
+def load_data(strategy, experiment):
+    """Load data for specific strategy and experiment"""
+    try:
+        file_path = f"compare_data/{strategy}/{file_mappings[experiment]}"
+        if os.path.exists(file_path):
+            df = pd.read_csv(file_path)
+            return df
+        else:
+            st.warning(f"File not found: {file_path}")
+            return None
+    except Exception as e:
+        st.error(f"Error loading data: {str(e)}")
+        return None
 
-    # return comparator
-    for exp_name, paths in experiments_paths.items():
-        comparator.load_data(exp_name, paths['defined'], paths['undefined'])
-    
-    return comparator
+@st.cache_data
+def get_all_models_from_data(strategies, experiment):
+    """Extract all unique models from the datasets"""
+    all_models = set()
+    for strategy in strategies:
+        data = load_data(strategy, experiment)
+        if data is not None and 'Model' in data.columns:
+            all_models.update(data['Model'].unique())
+    return sorted(list(all_models))
 
-def get_metric_mappings():
-    """Define metric mappings for each experiment"""
-    return {
-        'NL2PL': {
-            'Accuracy': 'Accuracy',
-            'Precision': 'Precision', 
-            'Recall': 'Recall',
-            'F1 Score': 'F1',
-            'Jaccard Index': 'Jaccard',
-            'Levenshtein Distance': 'Levenshtein'
-        },
-        'NL2FutureLTL': {
-            'GT→Pred Accuracy': 'Accuracy_GT_to_Pred (%)',
-            'Pred→GT Accuracy': 'Accuracy_Pred_to_GT (%)',
-            'Equivalence Accuracy': 'Equivalence_Accuracy (%)',
-            'Syntactic Correctness': 'Syntactic_Correctness_Rate (%)',
-            'Syntactic Match': 'Syntactic_Match_Rate (%)',
-            'Precision': 'Precision (%)',
-            'Recall': 'Recall (%)',
-            'F1 Score': 'F1 (%)'
-        },
-        'WFF': {
-            'Accuracy': 'Accuracy',
-            'Precision': 'Precision',
-            'Recall': 'Recall',
-            'F1 Score': 'F1_Score',
-            'True Positives': 'True_Positives',
-            'True Negatives': 'True_Negatives',
-            'False Positives': 'False_Positives',
-            'False Negatives': 'False_Negatives',
-        },
-        'Trace Generation': {
-            'Accuracy': 'Accuracy',
-            'Precision': 'Precision',
-            'Recall': 'Recall',
-            'F1 Score': 'F1_Score',
-            'Positive Satisfaction Rate': 'Positive_Satisfaction_Rate',
-            'Negative Falsification Rate': 'Negative_Falsification_Rate'
-        },
-        'Trace Characterization': {
-            'Accuracy': 'Accuracy',
-            'Precision': 'Precision',
-            'F1 Score': 'F1'
-        },
-        'Textbook NL2FutureLTL': {
-            'GT→Pred Accuracy': 'Accuracy_GT_to_Pred (%)',
-            'Pred→GT Accuracy': 'Accuracy_Pred_to_GT (%)',
-            'Equivalence Accuracy': 'Equivalence_Accuracy (%)',
-            'Syntactic Correctness': 'Syntactic_Correctness_Rate (%)',
-            'Syntactic Match': 'Syntactic_Match_Rate (%)',
-            'Precision': 'Precision (%)',
-            'Recall': 'Recall (%)',
-            'F1 Score': 'F1 (%)'
-        },
-        'NL2PastLTL': {
-            'GT→Pred Accuracy': 'Accuracy_GT_to_Pred (%)',
-            'Pred→GT Accuracy': 'Accuracy_Pred_to_GT (%)',
-            'Equivalence Accuracy': 'Equivalence_Accuracy (%)',
-            'Syntactic Correctness': 'Syntactic_Correctness_Rate (%)',
-            'Syntactic Match': 'Syntactic_Match_Rate (%)',
-            'Precision': 'Precision (%)',
-            'Recall': 'Recall (%)',
-            'F1 Score': 'F1 (%)'
-        }
-    }
-
-def create_single_metric_comparison(data, experiment_name, selected_metric, metric_mappings):
-    """Create a comparison chart for a single metric between defined and undefined"""
+def create_model_approach_metric_analysis(strategies, experiment, selected_models, selected_metrics):
+    """Create comprehensive model-approach-metric analysis"""
+    analysis_data = []
     
-    if experiment_name not in data.data:
-        st.error(f"No data available for {experiment_name}")
+    for strategy in strategies:
+        data = load_data(strategy, experiment)
+        if data is not None and 'Model' in data.columns:
+            for model in selected_models:
+                model_data = data[data['Model'] == model]
+                if not model_data.empty:
+                    for metric in selected_metrics:
+                        metric_col = metric_mappings[experiment][metric]
+                        if metric_col in model_data.columns:
+                            values = model_data[metric_col].dropna()
+                            if len(values) > 0:
+                                analysis_data.append({
+                                    'Model': model,
+                                    'Approach': strategy,
+                                    'Metric': metric,
+                                    'Mean': values.mean(),
+                                    'Std': values.std(),
+                                    'Min': values.min(),
+                                    'Max': values.max(),
+                                    'Median': values.median(),
+                                    'Count': len(values),
+                                    'Q25': values.quantile(0.25),
+                                    'Q75': values.quantile(0.75)
+                                })
+    
+    return pd.DataFrame(analysis_data)
+
+def create_model_performance_heatmap(analysis_df, metric_focus=None):
+    """Create model performance heatmap across approaches"""
+    if analysis_df.empty:
         return None
     
-    experiment_data = data.data[experiment_name]
-    defined_df = experiment_data['defined']
-    undefined_df = experiment_data['undefined']
+    # Filter by metric if specified
+    if metric_focus:
+        plot_data = analysis_df[analysis_df['Metric'] == metric_focus]
+        title_suffix = f" - {metric_focus}"
+    else:
+        # Use first metric or aggregate
+        plot_data = analysis_df.groupby(['Model', 'Approach'])['Mean'].mean().reset_index()
+        title_suffix = " - Overall Performance"
     
-    # Get the actual column name from the mapping
-    if selected_metric not in metric_mappings[experiment_name]:
-        st.error(f"Metric {selected_metric} not found in mappings")
-        return None
-        
-    actual_col = metric_mappings[experiment_name][selected_metric]
-    
-    if actual_col not in defined_df.columns or actual_col not in undefined_df.columns:
-        st.error(f"Column {actual_col} not found in data")
+    if plot_data.empty:
         return None
     
-    # Calculate statistics
-    defined_mean = defined_df[actual_col].mean()
-    undefined_mean = undefined_df[actual_col].mean()
-    defined_std = defined_df[actual_col].std()
-    undefined_std = undefined_df[actual_col].std()
+    # Pivot for heatmap
+    if 'Mean' not in plot_data.columns:
+        plot_data = plot_data.groupby(['Model', 'Approach'])['Mean'].first().reset_index()
     
-    # Create the comparison chart
-    fig = go.Figure()
+    heatmap_matrix = plot_data.pivot(index='Model', columns='Approach', values='Mean')
     
-    # Add bars
-    fig.add_trace(go.Bar(
-        name='Defined Prompt',
-        x=['Defined'],
-        y=[defined_mean],
-        marker_color='#3498db',
-        text=f'{defined_mean:.3f}',
-        textposition='auto',
-        error_y=dict(type='data', array=[defined_std], visible=True)
+    fig = go.Figure(data=go.Heatmap(
+        z=heatmap_matrix.values,
+        x=heatmap_matrix.columns,
+        y=heatmap_matrix.index,
+        colorscale='Viridis',
+        text=np.around(heatmap_matrix.values, decimals=3),
+        texttemplate="%{text}",
+        textfont={"size": 18, "color": "white"},
+        hoverongaps=False,
+        hovertemplate='<b>Model</b>: %{y}<br>' +
+                     '<b>Approach</b>: %{x}<br>' +
+                     '<b>Performance</b>: %{z:.4f}<extra></extra>',
+        colorbar=dict(title="Performance Score")
     ))
     
-    fig.add_trace(go.Bar(
-        name='Not-Well-Defined Prompt',
-        x=['Not-Well-Defined'],
-        y=[undefined_mean],
-        marker_color='#e74c3c',
-        text=f'{undefined_mean:.3f}',
-        textposition='auto',
-        error_y=dict(type='data', array=[undefined_std], visible=True)
-    ))
-    
-    # Update layout
     fig.update_layout(
-        title=f'{experiment_name.upper()} - {selected_metric}',
-        xaxis_title='Prompt Type',
-        yaxis_title=f'{selected_metric} Score',
-        barmode='group',
-        height=500,
+        title={
+            'text': f'<b>🔥 Model Performance Heatmap{title_suffix}</b>',
+            'x': 0.5,
+            'font': {'size': 24, 'family': 'Arial Black'}
+        },
+        xaxis_title="<b>Prompting Approaches</b>",
+        yaxis_title="<b>Models</b>",
+        height=max(400, len(heatmap_matrix.index) * 40),
+        width=800
+    )
+    
+    return fig
+
+def create_model_metric_comparison(analysis_df, selected_models):
+    """Create comprehensive model-metric comparison across approaches"""
+    if analysis_df.empty:
+        return None
+    
+    fig = make_subplots(
+        rows=len(selected_models),
+        cols=1,
+        subplot_titles=[f"<b>{model}</b>" for model in selected_models],
+        vertical_spacing=0.05
+    )
+    
+    colors = ['#667eea', '#764ba2', '#f093fb', '#4ecdc4', '#45b7d1']
+    
+    for i, model in enumerate(selected_models):
+        model_data = analysis_df[analysis_df['Model'] == model]
+        
+        approaches = model_data['Approach'].unique()
+        for j, approach in enumerate(approaches):
+            approach_data = model_data[model_data['Approach'] == approach]
+            
+            fig.add_trace(
+                go.Bar(
+                    name=f"{approach}" if i == 0 else "",
+                    x=approach_data['Metric'],
+                    y=approach_data['Mean'],
+                    error_y=dict(type='data', array=approach_data['Std']),
+                    marker_color=colors[j % len(colors)],
+                    text=[f"{val:.3f}" for val in approach_data['Mean']],
+                    textposition='auto',
+                    showlegend=(i == 0),
+                    hovertemplate=f'<b>{approach}</b><br>' +
+                                 'Metric: %{x}<br>' +
+                                 'Mean: %{y:.4f}<br>' +
+                                 'Std: %{error_y.array:.4f}<extra></extra>'
+                ),
+                row=i+1, col=1
+            )
+    
+    fig.update_layout(
+        title={
+            'text': '<b>🎯 Model-Metric Performance Across Approaches</b>',
+            'x': 0.5,
+            'font': {'size': 24, 'family': 'Arial Black'}
+        },
+        height=300 * len(selected_models),
         showlegend=True,
         legend=dict(
             orientation="h",
@@ -244,1087 +312,633 @@ def create_single_metric_comparison(data, experiment_name, selected_metric, metr
         )
     )
     
-    return fig, {
-        'defined_mean': defined_mean,
-        'undefined_mean': undefined_mean,
-        'defined_std': defined_std,
-        'undefined_std': undefined_std,
-        'difference': defined_mean - undefined_mean,
-        'defined_count': len(defined_df),
-        'undefined_count': len(undefined_df)
-    }
-def create_detailed_comparison_chart(comparator, experiment, metric, models=None, approaches=None):
-    """Create a detailed comparison chart showing models and approaches"""
-    
-    metric_col = comparator.metric_mappings[experiment].get(metric, metric)
-    
-    detailed_data = []
-    
-    for prompt_type in ['defined', 'undefined']:
-        data = comparator.experiments[experiment][prompt_type]
-        if data is not None and metric_col in data.columns:
-            # Find model and approach columns
-            model_col = None
-            approach_col = None
-            
-            for col in data.columns:
-                if 'model' in col.lower() or col == 'Model':
-                    model_col = col
-                if 'approach' in col.lower() or col == 'Approach':
-                    approach_col = col
-            
-            # Process data
-            for _, row in data.iterrows():
-                if pd.notna(row[metric_col]):
-                    model = row[model_col] if model_col else 'Unknown'
-                    approach = row[approach_col] if approach_col else 'Unknown'
-                    
-                    # Filter if specified
-                    if models and model not in models:
-                        continue
-                    if approaches and approach not in approaches:
-                        continue
-                    
-                    detailed_data.append({
-                        'Prompt Type': prompt_type.title(),
-                        'Model': model,
-                        'Approach': approach,
-                        'Value': row[metric_col],
-                        'Category': f"{model} - {approach}"
-                    })
-    
-    if not detailed_data:
-        st.warning("No detailed data available for the selected combination.")
-        return None
-    
-    df_detailed = pd.DataFrame(detailed_data)
-    
-    # Create grouped bar chart
-    fig = px.bar(
-        df_detailed,
-        x='Category',
-        y='Value',
-        color='Prompt Type',
-        title=f"Detailed Comparison: {experiment.replace('_', ' ').title()} - {metric}",
-        labels={'Value': metric, 'Category': 'Model - Approach'},
-        color_discrete_map={'Defined': '#667eea', 'Undefined': '#764ba2'}
-    )
-    
-    fig.update_layout(
-        xaxis_tickangle=-45,
-        height=500,
-        template="plotly_white"
-    )
+    fig.update_xaxes(title_text="<b>Metrics</b>")
+    fig.update_yaxes(title_text="<b>Performance Score</b>")
     
     return fig
-def create_detailed_statistics_single_metric(stats, selected_metric):
-    """Create detailed statistics display for single metric"""
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric(
-            label="Defined Prompt",
-            value=f"{stats['defined_mean']:.3f}",
-            delta=f"±{stats['defined_std']:.3f}"
-        )
-        st.caption(f"Count: {stats['defined_count']}")
-    
-    with col2:
-        st.metric(
-            label="Not-Well-Defined Prompt", 
-            value=f"{stats['undefined_mean']:.3f}",
-            delta=f"±{stats['undefined_std']:.3f}"
-        )
-        st.caption(f"Count: {stats['undefined_count']}")
-    
-    with col3:
-        delta_color = "normal" if stats['difference'] > 0 else "inverse"
-        st.metric(
-            label="Difference",
-            value=f"{stats['difference']:.3f}",
-            delta=f"{'Higher' if stats['difference'] > 0 else 'Lower'} for Defined",
-            delta_color=delta_color
-        )
-        
-        # Performance indicator
-        if abs(stats['difference']) > 0.1:
-            st.caption("🔍 **Significant difference**")
-        elif abs(stats['difference']) > 0.05:
-            st.caption("⚠️ **Moderate difference**")
-        else:
-            st.caption("✅ **Small difference**")
 
-def create_distribution_comparison(data, experiment_name, selected_metric, metric_mappings):
-    """Create distribution comparison for the selected metric"""
+def create_approach_ranking_analysis(analysis_df):
+    """Create approach ranking analysis for each model"""
+    if analysis_df.empty:
+        return None
     
-    experiment_data = data.data[experiment_name]
-    defined_df = experiment_data['defined']
-    undefined_df = experiment_data['undefined']
+    ranking_data = []
     
-    actual_col = metric_mappings[experiment_name][selected_metric]
+    for model in analysis_df['Model'].unique():
+        model_data = analysis_df[analysis_df['Model'] == model]
+        
+        # Calculate overall performance per approach
+        approach_performance = model_data.groupby('Approach')['Mean'].mean().sort_values(ascending=False)
+        
+        for rank, (approach, score) in enumerate(approach_performance.items(), 1):
+            ranking_data.append({
+                'Model': model,
+                'Approach': approach,
+                'Overall_Score': score,
+                'Rank': rank,
+                'Metric_Count': len(model_data[model_data['Approach'] == approach])
+            })
     
-    # Create distribution plot
-    fig = go.Figure()
+    ranking_df = pd.DataFrame(ranking_data)
     
-    # Add histograms
-    fig.add_trace(go.Histogram(
-        x=defined_df[actual_col],
-        name='Defined Prompt',
-        opacity=0.5,
-        marker_color='#3498db',
-        nbinsx=20
-    ))
+    # Create ranking visualization
+    fig = px.bar(
+        ranking_df,
+        x='Model',
+        y='Overall_Score',
+        color='Approach',
+        text='Rank',
+        title='<b>🏆 Approach Rankings by Model</b>',
+        labels={
+            'Overall_Score': 'Overall Performance Score',
+            'Model': 'Models'
+        },
+        color_discrete_sequence=['#667eea', '#764ba2', '#f093fb']
+    )
     
-    fig.add_trace(go.Histogram(
-        x=undefined_df[actual_col],
-        name='Not-Well-Defined Prompt',
-        opacity=0.5,
-        marker_color='#e74c3c',
-        nbinsx=20
-    ))
+    fig.update_traces(
+        texttemplate='#%{text}',
+        textposition='inside',
+        textfont_size=18,
+        textfont_color='white'
+    )
     
-    # Update layout
     fig.update_layout(
-        title=f'Distribution of {selected_metric} Scores',
-        xaxis_title=f'{selected_metric} Score',
-        yaxis_title='Frequency',
-        barmode='overlay',
-        height=400,
+        title={
+            'x': 0.5,
+            'font': {'size': 24, 'family': 'Arial Black'}
+        },
+        height=500,
         showlegend=True
     )
     
-    return fig
+    return fig, ranking_df
 
-def create_side_by_side_comparison(data, experiment_name, selected_metric, metric_mappings):
-    """Create side-by-side comparison table for single metric"""
+def get_available_strategies(experiment):
+    """Get available strategies for a given experiment"""
+    available = []
+    for strategy in ['Minimal', 'Detailed', 'Python']:
+        if experiment in ['nl2pl', 'wff']:
+            if strategy != 'Python':  # Python doesn't have these experiments
+                available.append(strategy)
+        else:
+            available.append(strategy)
+    return available
+
+def calculate_statistics(data, metric_col):
+    """Calculate comprehensive statistics for a metric"""
+    if metric_col not in data.columns:
+        return {}
     
-    if experiment_name not in data.data:
-        return None
+    values = data[metric_col].dropna()
+    if len(values) == 0:
+        return {}
     
-    experiment_data = data.data[experiment_name]
-    defined_df = experiment_data['defined']
-    undefined_df = experiment_data['undefined']
-    
-    actual_col = metric_mappings[experiment_name][selected_metric]
-    
-    if actual_col not in defined_df.columns or actual_col not in undefined_df.columns:
-        return None
-    
-    # Calculate statistics
-    defined_stats = {
-        'mean': defined_df[actual_col].mean(),
-        'std': defined_df[actual_col].std(),
-        'min': defined_df[actual_col].min(),
-        'max': defined_df[actual_col].max(),
-        'median': defined_df[actual_col].median(),
-        'count': len(defined_df)
+    stats_dict = {
+        'mean': np.mean(values),
+        'median': np.median(values),
+        'std': np.std(values),
+        'min': np.min(values),
+        'max': np.max(values),
+        'q25': np.percentile(values, 25),
+        'q75': np.percentile(values, 75),
+        'count': len(values)
     }
-    
-    undefined_stats = {
-        'mean': undefined_df[actual_col].mean(),
-        'std': undefined_df[actual_col].std(),
-        'min': undefined_df[actual_col].min(),
-        'max': undefined_df[actual_col].max(),
-        'median': undefined_df[actual_col].median(),
-        'count': len(undefined_df)
-    }
-    
-    # Create comparison table
+    return stats_dict
+
+def create_comparison_dataframe(strategies, experiment, metric):
+    """Create a comparison dataframe for selected strategies"""
     comparison_data = []
-    for stat_name in ['mean', 'std', 'min', 'max', 'median', 'count']:
-        comparison_data.append({
-            'Statistic': stat_name.capitalize(),
-            'Defined Prompt': f'{defined_stats[stat_name]:.3f}' if stat_name != 'count' else f'{defined_stats[stat_name]}',
-            'Not-Well-Defined Prompt': f'{undefined_stats[stat_name]:.3f}' if stat_name != 'count' else f'{undefined_stats[stat_name]}',
-            'Difference': f'{defined_stats[stat_name] - undefined_stats[stat_name]:.3f}' if stat_name != 'count' else f'{defined_stats[stat_name] - undefined_stats[stat_name]}'
-        })
+    
+    for strategy in strategies:
+        data = load_data(strategy, experiment)
+        if data is not None:
+            metric_col = metric_mappings[experiment][metric]
+            if metric_col in data.columns:
+                stats = calculate_statistics(data, metric_col)
+                if stats:
+                    stats['Strategy'] = strategy
+                    stats['Experiment'] = experiment
+                    stats['Metric'] = metric
+                    comparison_data.append(stats)
     
     return pd.DataFrame(comparison_data)
 
-def create_model_approach_comparison(data, experiment_name, selected_metric, metric_mappings):
-    """Create a grouped bar chart comparing models and approaches for a specific metric"""
-    
-    if experiment_name not in data.data:
-        st.error(f"No data available for {experiment_name}")
+def create_bar_chart(comparison_df, metric_name):
+    """Create an interactive bar chart for strategy comparison"""
+    if comparison_df.empty:
         return None
     
-    if selected_metric not in metric_mappings[experiment_name]:
-        st.error(f"Metric {selected_metric} not found in mappings")
-        return None
-    
-    actual_metric = metric_mappings[experiment_name][selected_metric]
-    experiment_data = data.data[experiment_name]
-    defined_df = experiment_data['defined']
-    undefined_df = experiment_data['undefined']
-    
-    # Check if the metric exists in both dataframes
-    if actual_metric not in defined_df.columns or actual_metric not in undefined_df.columns:
-        st.error(f"Metric {actual_metric} not found in data columns")
-        return None
-    
-    # Find model and approach columns
-    model_col = None
-    approach_col = None
-    
-    for col in defined_df.columns:
-        col_lower = col.lower()
-        if 'model' in col_lower:
-            model_col = col
-        elif any(keyword in col_lower for keyword in ['approach', 'method', 'shot', 'prompt']):
-            approach_col = col
-    
-    if not model_col:
-        st.warning("No model column found in data. Looking for columns with 'model' in the name.")
-        return None
-    
-    # Get unique models and approaches
-    defined_models = defined_df[model_col].unique()
-    undefined_models = undefined_df[model_col].unique()
-    all_models = sorted(list(set(list(defined_models) + list(undefined_models))))
-    
-    if approach_col:
-        defined_approaches = defined_df[approach_col].unique()
-        undefined_approaches = undefined_df[approach_col].unique()
-        all_approaches = sorted(list(set(list(defined_approaches) + list(undefined_approaches))))
-    else:
-        all_approaches = ['All Data']
-    
-    # Create the figure
     fig = go.Figure()
     
-    # Color schemes
-    colors_defined = ['#3498db', '#2ecc71', '#f39c12', '#e74c3c', '#9b59b6', '#1abc9c', '#e67e22', '#34495e']
-    colors_undefined = ['#2980b9', '#27ae60', '#e67e22', '#c0392b', '#8e44ad', '#16a085', '#d35400', '#2c3e50']
+    strategies = comparison_df['Strategy'].unique()
+    colors = ['#667eea', '#764ba2', '#f093fb']
     
-    # Create x-axis labels (combinations of model and approach)
-    x_labels = []
-    defined_values = []
-    undefined_values = []
+    for i, strategy in enumerate(strategies):
+        strategy_data = comparison_df[comparison_df['Strategy'] == strategy]
+        
+        fig.add_trace(go.Bar(
+            name=strategy,
+            x=['Mean', 'Median', 'Max', 'Min'],
+            y=[strategy_data['mean'].iloc[0], 
+               strategy_data['median'].iloc[0],
+               strategy_data['max'].iloc[0],
+               strategy_data['min'].iloc[0]],
+            marker_color=colors[i % len(colors)],
+            text=[f"{val:.3f}" for val in [
+                strategy_data['mean'].iloc[0], 
+                strategy_data['median'].iloc[0],
+                strategy_data['max'].iloc[0],
+                strategy_data['min'].iloc[0]
+            ]],
+            textposition='auto',
+            hovertemplate=f'<b>{strategy}</b><br>' +
+                         'Statistic: %{x}<br>' +
+                         'Value: %{y:.4f}<extra></extra>'
+        ))
     
-    for model in all_models:
-        for approach in all_approaches:
-            if approach_col:
-                # Filter by both model and approach
-                defined_subset = defined_df[(defined_df[model_col] == model) & (defined_df[approach_col] == approach)]
-                undefined_subset = undefined_df[(undefined_df[model_col] == model) & (undefined_df[approach_col] == approach)]
-                x_label = f"{model}\n{approach}"
-            else:
-                # Filter by model only
-                defined_subset = defined_df[defined_df[model_col] == model]
-                undefined_subset = undefined_df[undefined_df[model_col] == model]
-                x_label = model
-            
-            if len(defined_subset) > 0 and len(undefined_subset) > 0:
-                defined_mean = defined_subset[actual_metric].mean()
-                undefined_mean = undefined_subset[actual_metric].mean()
-                
-                x_labels.append(x_label)
-                defined_values.append(defined_mean)
-                undefined_values.append(undefined_mean)    
-    if not x_labels:
-        st.warning("No matching model-approach combinations found in both defined and undefined data")
-        return None
-    
-    # Add bars for defined prompts
-    fig.add_trace(go.Bar(
-        name='Defined Prompt',
-        x=x_labels,
-        y=defined_values,
-        marker_color='#3498db',
-        text=[f'{val:.2f}' for val in defined_values],
-        textposition='auto',
-        # opacity=0.1
-    ))
-    
-    # Add bars for undefined prompts
-    fig.add_trace(go.Bar(
-        name='Not-Well-Defined Prompt',
-        x=x_labels,
-        y=undefined_values,
-        marker_color='#e74c3c',
-        text=[f'{val:.2f}' for val in undefined_values],
-        textposition='auto',
-        # opacity=0.8
-    ))
-    
-    # Update layout
     fig.update_layout(
-        title=f'{experiment_name.upper()} - {selected_metric} Comparison by Model and Approach',
-        xaxis_title='Model - Approach',
-        yaxis_title=selected_metric,
+        title={
+            'text': f'<b>📊 {metric_name} Performance Comparison</b>',
+            'x': 0.5,
+            'font': {'size': 24, 'family': 'Arial Black'}
+        },
+        xaxis_title="<b>Statistical Measures</b>",
+        yaxis_title=f"<b>{metric_name} Values</b>",
         barmode='group',
-        height=600,
+        height=500,
         showlegend=True,
-        xaxis=dict(
-            tickangle=45,
-            tickfont=dict(size=10)
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
         ),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        )
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)'
     )
     
     return fig
 
-def create_model_approach_statistics(data, experiment_name, selected_metric, metric_mappings):
-    """Create detailed statistics table for model-approach combinations"""
+def create_heatmap(strategies, experiment, available_metrics):
+    """Create a performance heatmap"""
+    heatmap_data = []
     
-    if experiment_name not in data.data or selected_metric not in metric_mappings[experiment_name]:
+    for strategy in strategies:
+        strategy_row = {'Strategy': strategy}
+        data = load_data(strategy, experiment)
+        
+        if data is not None:
+            for metric in available_metrics:
+                metric_col = metric_mappings[experiment][metric]
+                if metric_col in data.columns:
+                    mean_val = data[metric_col].dropna().mean()
+                    strategy_row[metric] = mean_val
+                else:
+                    strategy_row[metric] = np.nan
+        
+        heatmap_data.append(strategy_row)
+    
+    heatmap_df = pd.DataFrame(heatmap_data)
+    heatmap_df = heatmap_df.set_index('Strategy')
+    
+    if heatmap_df.empty:
         return None
     
-    actual_metric = metric_mappings[experiment_name][selected_metric]
-    experiment_data = data.data[experiment_name]
-    defined_df = experiment_data['defined']
-    undefined_df = experiment_data['undefined']
+    fig = go.Figure(data=go.Heatmap(
+        z=heatmap_df.values,
+        x=heatmap_df.columns,
+        y=heatmap_df.index,
+        colorscale='Viridis',
+        text=np.around(heatmap_df.values, decimals=3),
+        texttemplate="%{text}",
+        textfont={"size": 18},
+        hoverongaps=False,
+        hovertemplate='<b>Strategy</b>: %{y}<br>' +
+                     '<b>Metric</b>: %{x}<br>' +
+                     '<b>Value</b>: %{z:.4f}<extra></extra>'
+    ))
     
-    # Find model and approach columns
-    model_col = None
-    approach_col = None
-    
-    for col in defined_df.columns:
-        col_lower = col.lower()
-        if 'model' in col_lower:
-            model_col = col
-        elif any(keyword in col_lower for keyword in ['approach', 'method', 'shot', 'prompt']):
-            approach_col = col
-    
-    if not model_col:
-        return None
-    
-    # Get unique models and approaches
-    defined_models = defined_df[model_col].unique()
-    undefined_models = undefined_df[model_col].unique()
-    all_models = sorted(list(set(list(defined_models) + list(undefined_models))))
-    
-    if approach_col:
-        defined_approaches = defined_df[approach_col].unique()
-        undefined_approaches = undefined_df[approach_col].unique()
-        all_approaches = sorted(list(set(list(defined_approaches) + list(undefined_approaches))))
-    else:
-        all_approaches = ['All Data']
-    
-    # Create statistics table
-    stats_data = []
-    
-    for model in all_models:
-        for approach in all_approaches:
-            if approach_col:
-                defined_subset = defined_df[(defined_df[model_col] == model) & (defined_df[approach_col] == approach)]
-                undefined_subset = undefined_df[(undefined_df[model_col] == model) & (undefined_df[approach_col] == approach)]
-            else:
-                defined_subset = defined_df[defined_df[model_col] == model]
-                undefined_subset = undefined_df[undefined_df[model_col] == model]
-            
-            if len(defined_subset) > 0 and len(undefined_subset) > 0:
-                defined_mean = defined_subset[actual_metric].mean()
-                undefined_mean = undefined_subset[actual_metric].mean()
-                defined_std = defined_subset[actual_metric].std()
-                undefined_std = undefined_subset[actual_metric].std()
-                
-                stats_data.append({
-                    'Model': model,
-                    'Approach': approach if approach_col else 'N/A',
-                    'Defined Mean': f'{defined_mean:.3f}',
-                    'Defined Std': f'{defined_std:.3f}',
-                    'Undefined Mean': f'{undefined_mean:.3f}',
-                    'Undefined Std': f'{undefined_std:.3f}',
-                    'Difference': f'{defined_mean - undefined_mean:.3f}',
-                    'Defined Count': len(defined_subset),
-                    'Undefined Count': len(undefined_subset)
-                })
-    
-    if stats_data:
-        return pd.DataFrame(stats_data)
-    return None
-
-def create_grouped_bar_chart(data, experiment_name, selected_metrics, metric_mappings, comparison_type="prompt_type"):
-    """Create a grouped bar chart with different comparison options"""
-    
-    if experiment_name not in data.data:
-        st.error(f"No data available for {experiment_name}")
-        return None
-    
-    experiment_data = data.data[experiment_name]
-    defined_df = experiment_data['defined']
-    undefined_df = experiment_data['undefined']
-    
-    # Get the actual column names from the mapping
-    actual_metrics = []
-    display_metrics = []
-    
-    for display_name in selected_metrics:
-        if display_name in metric_mappings[experiment_name]:
-            actual_col = metric_mappings[experiment_name][display_name]
-            if actual_col in defined_df.columns and actual_col in undefined_df.columns:
-                actual_metrics.append(actual_col)
-                display_metrics.append(display_name)
-    
-    if not actual_metrics:
-        st.warning("No valid metrics selected or available in the data")
-        return None
-    
-    # Create the grouped bar chart
-    fig = go.Figure()
-    
-    if comparison_type == "prompt_type":
-        # Original comparison: defined vs undefined
-        defined_means = []
-        undefined_means = []
-        
-        for metric in actual_metrics:
-            defined_mean = defined_df[metric].mean()
-            undefined_mean = undefined_df[metric].mean()
-            defined_means.append(defined_mean)
-            undefined_means.append(undefined_mean)
-        
-        fig.add_trace(go.Bar(
-            name='Defined Prompt',
-            x=display_metrics,
-            y=defined_means,
-            marker_color='#3498db',
-            text=[f'{val:.2f}' for val in defined_means],
-            textposition='auto',
-        ))
-        
-        fig.add_trace(go.Bar(
-            name='Not-Well-Defined Prompt',
-            x=display_metrics,
-            y=undefined_means,
-            marker_color='#e74c3c',
-            text=[f'{val:.2f}' for val in undefined_means],
-            textposition='auto',
-        ))
-        
-        title = f'{experiment_name.upper()} - Comparison of Defined vs Not-Well-Defined Prompts'
-    
-    elif comparison_type == "model_prompt":
-        # Model-Prompt combination comparison
-        colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e']
-        color_idx = 0
-        
-        # Combine both dataframes with labels
-        combined_data = []
-        
-        # Process defined data
-        model_col = None
-        prompt_col = None
-        
-        for col in defined_df.columns:
-            if 'model' in col.lower():
-                model_col = col
-                break
-        
-        if model_col:
-            for model in defined_df[model_col].unique():
-                model_data = defined_df[defined_df[model_col] == model]
-                means = []
-                
-                for metric in actual_metrics:
-                    means.append(model_data[metric].mean())
-                
-                fig.add_trace(go.Bar(
-                    name=f'{model} (Defined)',
-                    x=display_metrics,
-                    y=means,
-                    marker_color=colors[color_idx % len(colors)],
-                    text=[f'{val:.2f}' for val in means],
-                    textposition='auto',
-                ))
-                color_idx += 1
-            
-            # Process undefined data
-            for model in undefined_df[model_col].unique():
-                model_data = undefined_df[undefined_df[model_col] == model]
-                means = []
-                
-                for metric in actual_metrics:
-                    means.append(model_data[metric].mean())
-                
-                fig.add_trace(go.Bar(
-                    name=f'{model} (Undefined)',
-                    x=display_metrics,
-                    y=means,
-                    marker_color=colors[color_idx % len(colors)],
-                    text=[f'{val:.2f}' for val in means],
-                    textposition='auto',
-                ))
-                color_idx += 1
-        
-        else:
-            # Fallback to prompt type comparison if no model column
-            st.warning("No model column found in data. Falling back to prompt type comparison.")
-            return create_grouped_bar_chart(data, experiment_name, selected_metrics, metric_mappings, "prompt_type")
-        
-        title = f'{experiment_name.upper()} - Model Comparison Across Prompt Types'
-    
-    # Update layout
     fig.update_layout(
-        title=title,
-        xaxis_title='Metrics',
-        yaxis_title='Score',
-        barmode='group',
-        height=600,
-        showlegend=True,
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        )
+        title={
+            'text': f'<b>🔥 Performance Heatmap - {experiment.upper()}</b>',
+            'x': 0.5,
+            'font': {'size': 24, 'family': 'Arial Black'}
+        },
+        xaxis_title="<b>Metrics</b>",
+        yaxis_title="<b>Strategies</b>",
+        height=400
     )
     
     return fig
 
-def create_detailed_side_by_side_comparison(data, experiment_name, selected_metrics, metric_mappings, comparison_type="prompt_type"):
-    """Create side-by-side comparison with detailed statistics"""
-    
-    if experiment_name not in data.data:
+def create_statistical_summary(comparison_df):
+    """Create detailed statistical summary"""
+    if comparison_df.empty:
         return None
     
-    experiment_data = data.data[experiment_name]
-    defined_df = experiment_data['defined']
-    undefined_df = experiment_data['undefined']
+    st.markdown('<div class="section-header">📈 Statistical Analysis & Insights</div>', unsafe_allow_html=True)
     
-    # Create comparison table
-    comparison_data = []
+    # Performance Summary
+    cols = st.columns(len(comparison_df))
+    for i, row in comparison_df.iterrows():
+        with cols[i]:
+            st.markdown(f"""
+            <div class="metric-card">
+                <h3>{row['Strategy']}</h3>
+                <p><strong>Mean:</strong> {row['mean']:.4f}</p>
+                <p><strong>Std Dev:</strong> {row['std']:.4f}</p>
+                <p><strong>Range:</strong> {row['max']:.4f} - {row['min']:.4f}</p>
+            </div>
+            """, unsafe_allow_html=True)
     
-    if comparison_type == "prompt_type":
-        # Original prompt type comparison
-        for display_name in selected_metrics:
-            if display_name in metric_mappings[experiment_name]:
-                actual_col = metric_mappings[experiment_name][display_name]
-                if actual_col in defined_df.columns and actual_col in undefined_df.columns:
-                    defined_mean = defined_df[actual_col].mean()
-                    undefined_mean = undefined_df[actual_col].mean()
-                    defined_std = defined_df[actual_col].std()
-                    undefined_std = undefined_df[actual_col].std()
-                    
-                    comparison_data.append({
-                        'Metric': display_name,
-                        'Defined Mean': f'{defined_mean:.3f}',
-                        'Defined Std': f'{defined_std:.3f}',
-                        'Undefined Mean': f'{undefined_mean:.3f}',
-                        'Undefined Std': f'{undefined_std:.3f}',
-                        'Difference': f'{defined_mean - undefined_mean:.3f}'
-                    })
+    # Strategy Comparisons
+    st.markdown('<div class="section-header">🔍 Strategy Comparisons</div>', unsafe_allow_html=True)
     
-    elif comparison_type == "model_prompt":
-        # Model-prompt comparison
-        model_col = None
-        for col in defined_df.columns:
-            if 'model' in col.lower():
-                model_col = col
-                break
+    if len(comparison_df) > 1:
+        best_mean = comparison_df.loc[comparison_df['mean'].idxmax()]
+        worst_mean = comparison_df.loc[comparison_df['mean'].idxmin()]
+        most_consistent = comparison_df.loc[comparison_df['std'].idxmin()]
         
-        if model_col:
-            all_models = list(defined_df[model_col].unique()) + list(undefined_df[model_col].unique())
-            unique_models = list(set(all_models))
+        improvement = ((best_mean['mean'] - worst_mean['mean']) / worst_mean['mean']) * 100
+        
+        insights = f"""
+        <div class="insight-box">
+        <h4>🎯 Key Insights:</h4>
+        <ul>
+            <li><strong>Best Performing Strategy:</strong> {best_mean['Strategy']} (Mean: {best_mean['mean']:.4f})</li>
+            <li><strong>Most Consistent Strategy:</strong> {most_consistent['Strategy']} (Std Dev: {most_consistent['std']:.4f})</li>
+            <li><strong>Performance Gap:</strong> {improvement:.2f}% difference between best and worst</li>
+            <li><strong>Overall Range:</strong> {comparison_df['max'].max():.4f} to {comparison_df['min'].min():.4f}</li>
+        </ul>
+        </div>
+        """
+        st.markdown(insights, unsafe_allow_html=True)
+        
+        # Statistical significance test (if more than 2 strategies)
+        if len(comparison_df) >= 2:
+            st.markdown('<div class="section-header">📊 Statistical Significance</div>', unsafe_allow_html=True)
             
-            for model in unique_models:
-                defined_model_data = defined_df[defined_df[model_col] == model]
-                undefined_model_data = undefined_df[undefined_df[model_col] == model]
+            # Load raw data for significance testing
+            raw_data = {}
+            for _, row in comparison_df.iterrows():
+                strategy = row['Strategy']
+                experiment = row['Experiment']
+                metric = row['Metric']
+                data = load_data(strategy, experiment)
+                if data is not None:
+                    metric_col = metric_mappings[experiment][metric]
+                    if metric_col in data.columns:
+                        raw_data[strategy] = data[metric_col].dropna()
+            
+            if len(raw_data) >= 2:
+                strategies_list = list(raw_data.keys())
                 
-                if len(defined_model_data) > 0 and len(undefined_model_data) > 0:
-                    for display_name in selected_metrics:
-                        if display_name in metric_mappings[experiment_name]:
-                            actual_col = metric_mappings[experiment_name][display_name]
-                            if actual_col in defined_df.columns and actual_col in undefined_df.columns:
-                                defined_mean = defined_model_data[actual_col].mean()
-                                undefined_mean = undefined_model_data[actual_col].mean()
-                                defined_std = defined_model_data[actual_col].std()
-                                undefined_std = undefined_model_data[actual_col].std()
-                                
-                                comparison_data.append({
-                                    'Model': model,
-                                    'Metric': display_name,
-                                    'Defined Mean': f'{defined_mean:.3f}',
-                                    'Defined Std': f'{defined_std:.3f}',
-                                    'Undefined Mean': f'{undefined_mean:.3f}',
-                                    'Undefined Std': f'{undefined_std:.3f}',
-                                    'Difference': f'{defined_mean - undefined_mean:.3f}'
-                                })
-    
-    if comparison_data:
-        comparison_df = pd.DataFrame(comparison_data)
-        return comparison_df
-    return None
+                # Perform t-tests between strategies
+                significance_results = []
+                for i in range(len(strategies_list)):
+                    for j in range(i+1, len(strategies_list)):
+                        strategy1, strategy2 = strategies_list[i], strategies_list[j]
+                        if len(raw_data[strategy1]) > 1 and len(raw_data[strategy2]) > 1:
+                            t_stat, p_value = stats.ttest_ind(raw_data[strategy1], raw_data[strategy2])
+                            significance_results.append({
+                                'Comparison': f"{strategy1} vs {strategy2}",
+                                'T-Statistic': t_stat,
+                                'P-Value': p_value,
+                                'Significant': p_value < 0.05
+                            })
+                
+                if significance_results:
+                    sig_df = pd.DataFrame(significance_results)
+                    st.dataframe(sig_df, use_container_width=True)
 
-import os
-import pandas as pd
-def plot_grouped_bar_chart(df, metric):
-    model_col = next((col for col in df.columns if "model" in col.lower()), None)
-    approach_col = next((col for col in df.columns if "approach" in col.lower()), None)
-    if not model_col or not approach_col:
-        st.error("Model or Approach column missing.")
-        return None
+# Sidebar for user inputs
+st.sidebar.markdown("## 🎛️ Analysis Configuration")
 
-    df["Model + Approach"] = df[model_col] + " - " + df[approach_col]
-    fig = px.bar(
-        df,
-        x="Model + Approach",
-        y=metric,
-        color=model_col,
-        title=f"{metric} Across Models and Approaches",
+# Analysis Mode Selection
+st.sidebar.markdown("### 🔬 Analysis Mode")
+analysis_mode = st.sidebar.selectbox(
+    "Select Analysis Type:",
+    options=list(ANALYSIS_MODES.keys()),
+    help="Choose between strategy comparison or model-approach-metric analysis"
+)
+
+current_mode = ANALYSIS_MODES[analysis_mode]
+
+if current_mode == 'strategy':
+    # Original Strategy Comparison Mode
+    st.sidebar.markdown("### 📝 Layer 1: Prompting Strategies")
+    all_strategies = ['Minimal', 'Detailed', 'Python']
+    selected_strategies = st.sidebar.multiselect(
+        "Select Prompting Strategies:",
+        options=all_strategies,
+        default=['Minimal', 'Detailed'],
+        help="Choose one, two, or all three prompting strategies to compare"
     )
-    fig.update_layout(xaxis_tickangle=-45)
-    return fig
 
-def plot_line_trend(df, metric, by="Approach"):
-    model_col = next((col for col in df.columns if "model" in col.lower()), None)
-    approach_col = next((col for col in df.columns if "approach" in col.lower()), None)
-    if not model_col or not approach_col:
-        st.error("Model or Approach column missing.")
-        return None
+    # Layer 2: Experiment Selection
+    st.sidebar.markdown("### 🧪 Layer 2: Experiment Selection")
+    experiment_labels = [opt['label'] for opt in experiment_options]
+    experiment_values = [opt['value'] for opt in experiment_options]
 
-    fig = px.line(
-        df,
-        x=approach_col if by == "Approach" else model_col,
-        y=metric,
-        color=model_col if by == "Approach" else approach_col,
-        markers=True,
-        title=f"{metric} Trend by {by}"
+    selected_experiment_label = st.sidebar.selectbox(
+        "Select Experiment:",
+        options=experiment_labels,
+        help="Choose the experiment to analyze"
     )
-    return fig
 
-def plot_metrics_heatmap(df, metric_cols):
-    model_col = next((col for col in df.columns if "model" in col.lower()), None)
-    approach_col = next((col for col in df.columns if "approach" in col.lower()), None)
+    selected_experiment = experiment_values[experiment_labels.index(selected_experiment_label)]
 
-    if not model_col or not approach_col:
-        st.error("Model or Approach column missing.")
-        return None
+    # Filter strategies based on experiment availability
+    available_strategies = get_available_strategies(selected_experiment)
+    filtered_strategies = [s for s in selected_strategies if s in available_strategies]
 
-    df["Combo"] = df[model_col] + " - " + df[approach_col]
-    subset = df.set_index("Combo")[metric_cols]
+    if len(filtered_strategies) != len(selected_strategies):
+        unavailable = [s for s in selected_strategies if s not in available_strategies]
+        st.sidebar.warning(f"⚠️ {', '.join(unavailable)} not available for {selected_experiment_label}")
 
-    fig = px.imshow(
-        subset,
-        labels=dict(x="Metric", y="Model + Approach", color="Value"),
-        aspect="auto",
-        title="Metric Heatmap per Model+Approach"
-    )
-    return fig
-
-def plot_metric_correlation(df, metric_cols):
-    import seaborn as sns
-    import matplotlib.pyplot as plt
-
-    corr = df[metric_cols].corr()
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-    sns.heatmap(corr, annot=True, cmap="coolwarm", fmt=".2f", ax=ax)
-    st.pyplot(fig)
-
-
-# def run_python_results_viewer():
-#     import os
-#     import pandas as pd
-
-#     st.markdown("## 🐍 Python for Prompt Results")
-#     base_dir = "data/python_results_data"
-
-#     view_mode = st.radio("Choose Mode", ["📂 View Datasets", "📊 Analyze Metrics"])
-
-#     experiments = sorted([
-#         name for name in os.listdir(base_dir)
-#         if os.path.isdir(os.path.join(base_dir, name))
-#     ])
-
-#     if not experiments:
-#         st.error("No experiments found in `python_results_data`.")
-#         return
-
-#     selected_exp = st.selectbox("Select Experiment", experiments)
-#     exp_path = os.path.join(base_dir, selected_exp)
-
-#     if view_mode == "📂 View Datasets":
-#         # List all CSV files
-#         all_files = []
-#         for root, dirs, files in os.walk(exp_path):
-#             for file in files:
-#                 if file.endswith(".csv"):
-#                     rel_path = os.path.relpath(os.path.join(root, file), base_dir)
-#                     all_files.append(rel_path)
-
-#         if not all_files:
-#             st.warning("No CSV files found.")
-#             return
-
-#         selected_file = st.selectbox("Select File", all_files)
-#         file_path = os.path.join(base_dir, selected_file)
-
-#         df = pd.read_csv(file_path)
-#         st.markdown(f"### Preview: `{selected_file}`")
-#         st.dataframe(df, use_container_width=True)
-
-#         # Show quick stats if metric columns exist
-#         metric_cols = ["Accuracy", "Precision", "F1", "Sample_Count", "Error_Count"]
-#         available_metrics = [col for col in metric_cols if col in df.columns]
-#         if available_metrics:
-#             st.subheader("📊 Metric Summary")
-#             st.write(df[available_metrics].describe())
-
-#         with open(file_path, "rb") as f:
-#             st.download_button("⬇️ Download CSV", f, file_name=os.path.basename(file_path))
-#     elif view_mode == "📊 Analyze Metrics":
-#         # Detect candidate metrics file
-#         all_csvs = []
-#         for root, dirs, files in os.walk(exp_path):
-#             for file in files:
-#                 if file.endswith(".csv"):
-#                     all_csvs.append(os.path.join(root, file))
-
-#         selected_file = st.selectbox("Select File for Analysis", all_csvs, format_func=lambda x: os.path.relpath(x, base_dir))
-
-#         if not selected_file:
-#             st.warning("No CSV file selected.")
-#             return
-
-#         df = pd.read_csv(selected_file)
-
-#         # Detect metrics — any numeric column or ending in (%)
-#         metric_cols = [col for col in df.columns if df[col].dtype in ['float64', 'int64'] or col.strip().endswith("(%)")]
-
-#         if not metric_cols:
-#             st.warning("No numeric or percentage metric columns found.")
-#             return
-
-#         selected_metric = st.selectbox("Select Metric", metric_cols)
-
-#         st.subheader(f"🔬 Analysis for `{selected_exp}` — {selected_metric}")
-
-#         from utils.analysis_helpers import (
-#             create_model_approach_comparison_from_df,
-#             create_distribution_from_df
-#         )
-
-#         fig = create_model_approach_comparison_from_df(df, selected_metric)
-#         if fig:
-#             st.plotly_chart(fig, use_container_width=True)
-
-#         dist_fig = create_distribution_from_df(df, selected_metric)
-#         if dist_fig:
-#             st.plotly_chart(dist_fig, use_container_width=True)
-
-#         st.subheader("📊 Metric Summary")
-#         st.dataframe(df[[selected_metric]].describe())
-
-#         st.subheader("📊 Chart Gallery")
-
-#         # Grouped Bar
-#         bar_fig = plot_grouped_bar_chart(df, selected_metric)
-#         if bar_fig:
-#             st.plotly_chart(bar_fig, use_container_width=True)
-
-#         # Line Trend
-#         line_fig = plot_line_trend(df, selected_metric, by="Approach")
-#         if line_fig:
-#             st.plotly_chart(line_fig, use_container_width=True)
-
-#         # Distribution
-#         # dist_fig = create_distribution_from_df(df, selected_metric)
-#         # if dist_fig:
-#         #     st.plotly_chart(dist_fig, use_container_width=True)
-
-#         # Heatmap (All metrics)
-#         metric_subset = [col for col in df.columns if "%" in col or df[col].dtype in ["float64", "int64"]]
-#         if st.checkbox("🔍 Show Heatmap for All Metrics"):
-#             heatmap_fig = plot_metrics_heatmap(df, metric_subset)
-#             if heatmap_fig:
-#                 st.plotly_chart(heatmap_fig, use_container_width=True)
-
-#         # Correlation Heatmap
-#         if st.checkbox("📈 Show Correlation Between Metrics"):
-#             plot_metric_correlation(df, metric_subset)
-# def main():
-#     st.set_page_config(
-#         page_title="Benchmark Analysis Dashboard",
-#         page_icon="🏆",
-#         layout="wide",
-#         initial_sidebar_state="expanded"
-#     )
-    
-#     st.sidebar.title("📚 Navigation")
-#     page = st.sidebar.radio(
-#         "Go to",
-#         ["🏆 Benchmark Dashboard", "🐍 Python Results Analyzer"],
-#         help="Select the dashboard section"
-#     )
-    
-#     if page == "🏆 Benchmark Dashboard":
-#         run_benchmark_dashboard()
-#     elif page == "🐍 Python Results Analyzer":
-#         run_python_results_viewer()
-
-# if __name__ == "__main__":
-#     main()
-
-
-def main():
-    # Remove st.set_page_config() from here since it's already called in your existing app
-    
-    st.sidebar.title("📚 Navigation")
-    page = st.sidebar.radio(
-        "Go to",
-        ["🎯 Benchmark Analysis", "🏆 Benchmark Dashboard","Main Dashboard", "Python for Prompt Results"],
-        help="Select the dashboard section"
-    )
-    if page == "🎯 Benchmark Analysis":
-        run_benchmark_analysis()
-    elif page == "🏆 Benchmark Dashboard":
-        run_benchmark_dashboard()
-    elif page == "Main Dashboard":
-        run_main_dashboard()
-    elif page == "Python for Prompt Results":
-        run_python_results_viewer()
-    elif page == "Benchmark Results":
-        run_benchmark_results()
-    
-# Your existing run_main_dashboard() function (from the paste.txt)
-def run_main_dashboard():
-    # Header
-    st.markdown('<div class="main-header"><h1>🔬 Experiment Results Dashboard</h1><p>Compare Defined vs Undefined Prompts Across Different Experiments</p></div>', unsafe_allow_html=True)
-
-    with st.spinner("Loading experiment data..."):
-        comparator = load_all_data()
-    metric_mappings = get_metric_mappings()
-
-    # # Sidebar for controls
-    st.sidebar.header("📊 Controls")
-    comparison_type = st.sidebar.radio(
-        "Comparison Type",
-        ["Model-Approach Analysis", "Prompt Type"],
-        help="Choose between comparing prompt types, or detailed model-approach analysis"
-    )
-    
-    # Experiment selection
-    available_experiments = list(comparator.data.keys())
-    selected_experiment = st.sidebar.selectbox(
-        "Select Experiment",
-        available_experiments,
-        index=0 if available_experiments else 0,
-        help="Choose which experiment to analyze"
-    )  
-    if selected_experiment and selected_experiment in metric_mappings:
-        # Metric selection - single select based on selected experiment
+    # Layer 3: Metric Selection
+    st.sidebar.markdown("### 📏 Layer 3: Metric Selection")
+    if selected_experiment in metric_mappings:
         available_metrics = list(metric_mappings[selected_experiment].keys())
         selected_metric = st.sidebar.selectbox(
-            "Select Metric",
-            available_metrics,
-            index=0 if available_metrics else 0,
-            help="Choose which metric to compare between defined and undefined prompts"
+            "Select Metric:",
+            options=available_metrics,
+            help="Choose the performance metric to analyze"
         )
+    else:
+        st.sidebar.error("Invalid experiment selection")
+        selected_metric = None
 
-        if comparison_type == "Model-Approach Analysis":
-            # Single metric selection for model-approach analysis
-            selected_metric = st.sidebar.selectbox(
-                "Select Metric",
-                available_metrics,
-                help="Select a single metric to analyze across models and approaches"
-            )
-            selected_metrics = [selected_metric]  # Convert to list for compatibility
-        else:
-            # Multi-metric selection for other comparison types
-            selected_metrics = st.sidebar.multiselect(
-                "Select Metrics",
-                available_metrics,
-                default=available_metrics[:4]  # Default to first 4 metrics
-            )
-        # Show available models and approaches for Model-Approach Analysis
-        if comparison_type == "Model-Approach Analysis":
-            st.sidebar.subheader("Data Overview")
-            experiment_data = comparator.data[selected_experiment]
-            defined_df = experiment_data['defined']
-            undefined_df = experiment_data['undefined']
-            
-            # Find model and approach columns
-            model_col = None
-            approach_col = None
-            
-            for col in defined_df.columns:
-                col_lower = col.lower()
-                if 'model' in col_lower:
-                    model_col = col
-                elif any(keyword in col_lower for keyword in ['approach', 'method', 'shot', 'prompt']):
-                    approach_col = col
-            
-            if model_col:
-                all_models = sorted(list(set(list(defined_df[model_col].unique()) + list(undefined_df[model_col].unique()))))
-                st.sidebar.write(f"**Models ({len(all_models)}):**")
-                for model in all_models:
-                    st.sidebar.write(f"• {model}")
-            
-            if approach_col:
-                all_approaches = sorted(list(set(list(defined_df[approach_col].unique()) + list(undefined_df[approach_col].unique()))))
-                st.sidebar.write(f"**Approaches ({len(all_approaches)}):**")
-                for approach in all_approaches:
-                    st.sidebar.write(f"• {approach}")
-            
-            # Show column information
-            st.sidebar.subheader("Column Information")
-            st.sidebar.write(f"**Model Column:** {model_col if model_col else 'Not found'}")
-            st.sidebar.write(f"**Approach Column:** {approach_col if approach_col else 'Not found'}")
+else:
+    # Model-Approach-Metric Analysis Mode
+    st.sidebar.markdown("### 🧪 Experiment Selection")
+    experiment_labels = [opt['label'] for opt in experiment_options]
+    experiment_values = [opt['value'] for opt in experiment_options]
+
+    selected_experiment_label = st.sidebar.selectbox(
+        "Select Experiment:",
+        options=experiment_labels,
+        help="Choose the experiment to analyze"
+    )
+
+    selected_experiment = experiment_values[experiment_labels.index(selected_experiment_label)]
+    
+    # Get available strategies for this experiment
+    available_strategies = get_available_strategies(selected_experiment)
+    
+    st.sidebar.markdown("### 📝 Approach Selection")
+    selected_approaches = st.sidebar.multiselect(
+        "Select Approaches:",
+        options=available_strategies,
+        default=available_strategies,
+        help="Choose which prompting approaches to include"
+    )
+    
+    # Get all models from the data
+    if selected_approaches:
+        all_models = get_all_models_from_data(selected_approaches, selected_experiment)
         
-        if selected_metrics:
-            # Main content area
-            if comparison_type == "Model-Approach Analysis":
-                # Single metric analysis with model-approach comparison
-                st.subheader(f"🔬 {selected_experiment.upper()} - Model & Approach Analysis")
-                st.write(f"**Analyzing:** {selected_metric}")
+        st.sidebar.markdown("### 🤖 Model Selection")
+        selected_models = st.sidebar.multiselect(
+            "Select Models:",
+            options=all_models,
+            default=all_models[:5] if len(all_models) > 5 else all_models,
+            help="Choose which models to analyze"
+        )
+        
+        st.sidebar.markdown("### 📏 Metric Selection")
+        if selected_experiment in metric_mappings:
+            available_metrics = list(metric_mappings[selected_experiment].keys())
+            selected_metrics = st.sidebar.multiselect(
+                "Select Metrics:",
+                options=available_metrics,
+                default=available_metrics[:3] if len(available_metrics) > 3 else available_metrics,
+                help="Choose which metrics to analyze"
+            )
+        else:
+            selected_metrics = []
+    else:
+        selected_models = []
+        selected_metrics = []
+
+# Main analysis
+if current_mode == 'strategy':
+    # Original Strategy Comparison Analysis
+    if filtered_strategies and selected_experiment and selected_metric:
+        st.markdown(f"## 🎯 Analysis: {selected_experiment_label} - {selected_metric}")
+        
+        # Create comparison dataframe
+        comparison_df = create_comparison_dataframe(filtered_strategies, selected_experiment, selected_metric)
+        
+        if not comparison_df.empty:
+            # Create tabs for different views
+            tab1, tab2, tab3, tab4 = st.tabs(["📊 Bar Chart", "🔥 Heatmap", "📈 Statistical Summary", "📋 Raw Data"])
+            
+            with tab1:
+                # Bar chart
+                bar_fig = create_bar_chart(comparison_df, selected_metric)
+                if bar_fig:
+                    st.plotly_chart(bar_fig, use_container_width=True)
                 
-                # Create model-approach comparison chart
-                fig = create_model_approach_comparison(
-                    comparator,
-                    selected_experiment,
-                    selected_metric,
-                    metric_mappings
+            with tab2:
+                # Heatmap for all metrics
+                heatmap_fig = create_heatmap(filtered_strategies, selected_experiment, available_metrics)
+                if heatmap_fig:
+                    st.plotly_chart(heatmap_fig, use_container_width=True)
+            
+            with tab3:
+                # Statistical summary
+                create_statistical_summary(comparison_df)
+            
+            with tab4:
+                # Raw data view
+                st.markdown('<div class="section-header">📋 Raw Data Comparison</div>', unsafe_allow_html=True)
+                
+                for strategy in filtered_strategies:
+                    with st.expander(f"📊 {strategy} Strategy Data"):
+                        data = load_data(strategy, selected_experiment)
+                        if data is not None:
+                            st.dataframe(data, use_container_width=True)
+                            
+                            # Quick stats
+                            metric_col = metric_mappings[selected_experiment][selected_metric]
+                            if metric_col in data.columns:
+                                col1, col2, col3, col4 = st.columns(4)
+                                with col1:
+                                    st.metric("Mean", f"{data[metric_col].mean():.4f}")
+                                with col2:
+                                    st.metric("Std Dev", f"{data[metric_col].std():.4f}")
+                                with col3:
+                                    st.metric("Min", f"{data[metric_col].min():.4f}")
+                                with col4:
+                                    st.metric("Max", f"{data[metric_col].max():.4f}")
+        else:
+            st.error("No data available for the selected configuration")
+            
+    else:
+        st.info("👈 Please configure your analysis using the sidebar controls")
+
+else:
+    # Model-Approach-Metric Analysis
+    if selected_approaches and selected_models and selected_metrics and selected_experiment:
+        st.markdown(f"## 🤖 Model-Approach-Metric Analysis: {selected_experiment_label}")
+        
+        # Create model-approach-metric analysis
+        analysis_df = create_model_approach_metric_analysis(
+            selected_approaches, selected_experiment, selected_models, selected_metrics
+        )
+        
+        if not analysis_df.empty:
+            # Create tabs for different views
+            tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+                "🔥 Model Heatmap", 
+                "🎯 Model-Metric Comparison", 
+                "🏆 Approach Rankings",
+                "📊 Statistical Deep Dive",
+                "🔍 Model Analysis",
+                "📋 Raw Analysis Data"
+            ])
+            
+            with tab1:
+                # Model Performance Heatmap
+                st.markdown('<div class="section-header">🔥 Model Performance Heatmap</div>', unsafe_allow_html=True)
+                
+                # Option to select metric for heatmap
+                heatmap_metric = st.selectbox(
+                    "Select metric for heatmap:",
+                    options=['Overall'] + selected_metrics,
+                    help="Choose specific metric or overall performance"
                 )
                 
-                if fig:
-                    st.plotly_chart(fig, use_container_width=True)
-                
-                # Show detailed statistics
-                # st.subheader("📋 Detailed Statistics")
-                # stats_df = create_model_approach_statistics(
-                #     comparator,
-                #     selected_experiment,
-                #     selected_metric,
-                #     metric_mappings
-                # )
-                
-                # if stats_df is not None:
-                #     st.dataframe(stats_df, use_container_width=True)
-                
-            else:
-                # Original multi-metric analysis
-                col1, col2 = st.columns([2, 1])
-                
-                with col1:
-                    comparison_mode = "prompt_type" if comparison_type == "Prompt Type" else "model_prompt"
-                    
-                    st.subheader(f"📈 {selected_experiment.upper()} - {comparison_type} Comparison")
-                    
-                    # Create and display the chart
-                    fig = create_grouped_bar_chart(
-                        comparator, 
-                        selected_experiment, 
-                        selected_metrics, 
-                        metric_mappings,
-                        comparison_mode
-                    )
-                    
-                    if fig:
-                        st.plotly_chart(fig, use_container_width=True)
-                
-                with col2:
-                    st.subheader("📋 Detailed Statistics")
-                    
-                    # Create comparison table
-                    comparison_df = create_detailed_side_by_side_comparison(
-                        comparator,
-                        selected_experiment,
-                        selected_metrics,
-                        metric_mappings,
-                        comparison_mode
-                    )
-                    
-                    if comparison_df is not None:
-                        st.dataframe(comparison_df, use_container_width=True)
-                
-        if selected_metric:
-            # Main content area
-            st.header(f"📈 {selected_experiment.upper()} - {selected_metric}")
+                metric_for_heatmap = None if heatmap_metric == 'Overall' else heatmap_metric
+                heatmap_fig = create_model_performance_heatmap(analysis_df, metric_for_heatmap)
+                if heatmap_fig:
+                    st.plotly_chart(heatmap_fig, use_container_width=True)
             
-            # Create the comparison chart and get statistics
-            result = create_single_metric_comparison(
-                comparator, 
-                selected_experiment, 
-                selected_metric, 
-                metric_mappings
-            )
+            with tab2:
+                # Model-Metric Comparison
+                st.markdown('<div class="section-header">🎯 Model-Metric Performance Comparison</div>', unsafe_allow_html=True)
+                model_metric_fig = create_model_metric_comparison(analysis_df, selected_models)
+                if model_metric_fig:
+                    st.plotly_chart(model_metric_fig, use_container_width=True)
             
-            
-            if result:
-                fig, stats = result
-                
-                # Display the main chart
-                st.plotly_chart(fig, use_container_width=True)
-                
-                # Display detailed statistics
-                st.subheader("📊 Detailed Statistics")
-                create_detailed_statistics_single_metric(stats, selected_metric)
-                
-                # Create two columns for additional analysis
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.subheader("📋 Statistical Summary")
-                    comparison_df = create_side_by_side_comparison(
-                        comparator,
-                        selected_experiment,
-                        selected_metric,
-                        metric_mappings
-                    )
+            with tab3:
+                # Approach Rankings
+                st.markdown('<div class="section-header">🏆 Approach Performance Rankings</div>', unsafe_allow_html=True)
+                ranking_result = create_approach_ranking_analysis(analysis_df)
+                if ranking_result:
+                    ranking_fig, ranking_df = ranking_result
+                    st.plotly_chart(ranking_fig, use_container_width=True)
                     
-                    if comparison_df is not None:
-                        st.dataframe(comparison_df, use_container_width=True)
+                    st.markdown("### 📋 Detailed Rankings")
+                    st.dataframe(ranking_df, use_container_width=True)
+            
+            with tab4:
+                # Statistical Deep Dive
+                st.markdown('<div class="section-header">📊 Statistical Deep Dive</div>', unsafe_allow_html=True)
                 
-                with col2:
-                    st.subheader("📈 Score Distribution")
-                    distribution_fig = create_distribution_comparison(
-                        comparator,
-                        selected_experiment,
-                        selected_metric,
-                        metric_mappings
-                    )
-                    st.plotly_chart(distribution_fig, use_container_width=True)
+                # Best performing combinations
+                best_combinations = analysis_df.nlargest(10, 'Mean')[['Model', 'Approach', 'Metric', 'Mean', 'Std']]
+                st.markdown("### 🌟 Top 10 Model-Approach-Metric Combinations")
+                st.dataframe(best_combinations, use_container_width=True)
                 
-                # Additional insights
-                st.subheader("🔍 Key Insights")
+                # Statistical summary by approach
+                st.markdown("### 📈 Performance by Approach")
+                approach_stats = analysis_df.groupby('Approach').agg({
+                    'Mean': ['mean', 'std', 'min', 'max'],
+                    'Std': 'mean'
+                }).round(4)
+                approach_stats.columns = ['Mean_Avg', 'Mean_Std', 'Min_Performance', 'Max_Performance', 'Avg_Variability']
+                st.dataframe(approach_stats, use_container_width=True)
                 
-                # Generate insights based on the statistics
-                if abs(stats['difference']) > 0.1:
-                    if stats['difference'] > 0:
-                        st.success(f"✅ **Defined prompts significantly outperform** not-well-defined prompts by {stats['difference']:.3f} points in {selected_metric}")
-                    else:
-                        st.error(f"❌ **Not-well-defined prompts significantly outperform** defined prompts by {abs(stats['difference']):.3f} points in {selected_metric}")
-                elif abs(stats['difference']) > 0.05:
-                    st.warning(f"⚠️ **Moderate difference** observed: {'Defined' if stats['difference'] > 0 else 'Not-well-defined'} prompts perform better by {abs(stats['difference']):.3f} points")
-                else:
-                    st.info(f"ℹ️ **Similar performance** between defined and not-well-defined prompts (difference: {stats['difference']:.3f} points)")
+                # Model consistency analysis
+                st.markdown("### 🎯 Model Consistency Analysis")
+                model_consistency = analysis_df.groupby('Model').agg({
+                    'Mean': ['mean', 'std'],
+                    'Std': 'mean'
+                }).round(4)
+                model_consistency.columns = ['Avg_Performance', 'Performance_Variability', 'Avg_Std']
+                model_consistency['Consistency_Score'] = model_consistency['Avg_Performance'] / (1 + model_consistency['Performance_Variability'])
+                model_consistency = model_consistency.sort_values('Consistency_Score', ascending=False)
+                st.dataframe(model_consistency, use_container_width=True)
+            
+            with tab5:
+                # Individual Model Analysis
+                st.markdown('<div class="section-header">🔍 Individual Model Analysis</div>', unsafe_allow_html=True)
                 
-                # Show variability insights
-                if stats['defined_std'] > stats['undefined_std']:
-                    st.info(f"📊 **Defined prompts show higher variability** (std: {stats['defined_std']:.3f}) compared to not-well-defined prompts (std: {stats['undefined_std']:.3f})")
-                elif stats['undefined_std'] > stats['defined_std']:
-                    st.info(f"📊 **Not-well-defined prompts show higher variability** (std: {stats['undefined_std']:.3f}) compared to defined prompts (std: {stats['defined_std']:.3f})")
-                else:
-                    st.info(f"📊 **Similar variability** between both prompt types")
+                selected_model_analysis = st.selectbox(
+                    "Select model for detailed analysis:",
+                    options=selected_models
+                )
                 
-                # Show raw data if requested
-                if st.checkbox("Show Raw Data", help="Display the underlying data used for this comparison"):
-                    st.subheader("📄 Raw Data")
+                model_data = analysis_df[analysis_df['Model'] == selected_model_analysis]
+                
+                if not model_data.empty:
                     col1, col2 = st.columns(2)
                     
                     with col1:
-                        st.write("**Defined Prompt Data**")
-                        st.dataframe(comparator.data[selected_experiment]['defined'])
+                        # Performance by approach
+                        approach_performance = model_data.groupby('Approach')['Mean'].mean().sort_values(ascending=False)
+                        
+                        fig_approach = px.bar(
+                            x=approach_performance.index,
+                            y=approach_performance.values,
+                            title=f"<b>{selected_model_analysis} - Performance by Approach</b>",
+                            labels={'x': 'Approach', 'y': 'Average Performance'},
+                            color=approach_performance.values,
+                            color_continuous_scale='Viridis'
+                        )
+                        st.plotly_chart(fig_approach, use_container_width=True)
                     
                     with col2:
-                        st.write("**Not-Well-Defined Prompt Data**")
-                        st.dataframe(comparator.data[selected_experiment]['undefined'])
+                        # Performance by metric
+                        metric_performance = model_data.groupby('Metric')['Mean'].mean().sort_values(ascending=False)
+                        
+                        fig_metric = px.bar(
+                            x=metric_performance.index,
+                            y=metric_performance.values,
+                            title=f"<b>{selected_model_analysis} - Performance by Metric</b>",
+                            labels={'x': 'Metric', 'y': 'Average Performance'},
+                            color=metric_performance.values,
+                            color_continuous_scale='Plasma'
+                        )
+                        st.plotly_chart(fig_metric, use_container_width=True)
+                    
+                    # Detailed model stats
+                    st.markdown(f"### 📋 {selected_model_analysis} - Detailed Statistics")
+                    st.dataframe(model_data, use_container_width=True)
+            
+            with tab6:
+                # Raw Analysis Data
+                st.markdown('<div class="section-header">📋 Complete Analysis Dataset</div>', unsafe_allow_html=True)
+                st.dataframe(analysis_df, use_container_width=True)
+                
+                # Summary statistics
+                st.markdown("### 📊 Dataset Summary")
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("Total Combinations", len(analysis_df))
+                with col2:
+                    st.metric("Models Analyzed", analysis_df['Model'].nunique())
+                with col3:
+                    st.metric("Approaches Compared", analysis_df['Approach'].nunique())
+                with col4:
+                    st.metric("Metrics Evaluated", analysis_df['Metric'].nunique())
         
         else:
-            st.warning("Please select a metric to display the comparison.")
+            st.error("No data available for the selected model-approach-metric configuration")
     
     else:
-        st.error("No experiments available or selected experiment not found.")
+        st.info("👈 Please configure your model-approach-metric analysis using the sidebar controls")
 
-if __name__ == "__main__":
-    main()
+
+# Footer
+st.markdown("---")
+st.markdown("""
+<div style='text-align: center; color: #666; padding: 2rem;'>
+    <p><strong>Dynamic Benchmark Comparative Analysis Tool</strong></p>
+    <p>Comprehensive performance analysis across multiple prompting strategies and experiments</p>
+</div>
+""", unsafe_allow_html=True)
